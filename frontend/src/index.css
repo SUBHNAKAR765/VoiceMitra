@@ -1,0 +1,49 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  * { box-sizing: border-box; }
+  html { scroll-behavior: smooth; }
+  body {
+    @apply bg-gray-950 text-gray-100 font-sans antialiased;
+    background:
+      radial-gradient(ellipse at 20% 50%, rgba(15,12,41,0.27) 0%, transparent 60%),
+      radial-gradient(ellipse at 80% 20%, rgba(13,27,62,0.27) 0%, transparent 60%),
+      #030712;
+    min-height: 100vh;
+  }
+  ::-webkit-scrollbar { width: 4px; }
+  ::-webkit-scrollbar-track { @apply bg-gray-900; }
+  ::-webkit-scrollbar-thumb { @apply bg-gray-700 rounded-full; }
+}
+
+@layer components {
+  .glass {
+    background: rgba(255,255,255,0.04);
+    @apply backdrop-blur-md border border-white/10 rounded-2xl;
+  }
+  .neon-text {
+    @apply text-transparent bg-clip-text bg-gradient-to-r from-cyan-400 to-purple-500;
+  }
+  .neon-border {
+    box-shadow: 0 0 0 1px rgba(0,212,255,0.3), 0 0 20px rgba(0,212,255,0.1);
+  }
+  .btn-primary {
+    @apply px-6 py-3 rounded-xl font-medium transition-all duration-200
+           bg-gradient-to-r from-cyan-500 to-purple-600
+           hover:from-cyan-400 hover:to-purple-500
+           hover:shadow-lg hover:shadow-cyan-500/25
+           active:scale-95;
+  }
+  .btn-ghost {
+    @apply px-4 py-2 rounded-xl font-medium transition-all duration-200
+           text-gray-400 hover:text-white hover:bg-white/10
+           active:scale-95;
+  }
+
+  @keyframes pulse {
+    0% { transform: scaleY(0.4); opacity: 0.5; }
+    100% { transform: scaleY(1.2); opacity: 1; }
+  }
+}
