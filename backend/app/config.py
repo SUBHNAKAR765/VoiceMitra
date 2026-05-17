@@ -22,6 +22,11 @@ class Settings(BaseSettings):
 
     # Railway injects this automatically when MySQL plugin is added
     database_url: str = ""
+    mysql_url: str = ""  # Railway also injects as MYSQL_URL
+
+    @property
+    def resolved_database_url(self) -> str:
+        return self.database_url or self.mysql_url
 
     @property
     def audio_dir_abs(self) -> str:

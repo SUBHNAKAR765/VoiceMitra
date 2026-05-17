@@ -10,9 +10,10 @@ logger = logging.getLogger(__name__)
 def get_db_connection():
     settings = get_settings()
 
-    # Railway injects DATABASE_URL — parse it if present
-    if settings.database_url:
-        parsed = urlparse(settings.database_url)
+    # Railway injects DATABASE_URL or MYSQL_URL — parse whichever is present
+    resolved_url = settings.resolved_database_url
+    if resolved_url:
+        parsed = urlparse(resolved_url)
         config = {
             "host":     parsed.hostname,
             "port":     parsed.port or 3306,
