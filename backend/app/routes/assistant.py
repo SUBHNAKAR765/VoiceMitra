@@ -116,21 +116,27 @@ def _fetch_context(intent: str, query: str) -> str:
     """
     try:
         if intent == "weather":
-            return get_weather(query)
+            result = get_weather(query)
+            return result if not result.startswith("I'm having trouble") else ""
         if intent == "news":
-            return get_news(query)
+            result = get_news(query)
+            return result if not result.startswith("I'm having trouble") else ""
         if intent in ("time", "date", "greeting"):
             # Provide current time/date as context so Groq answers accurately
             now = datetime.now()
             return f"Current date and time: {now.strftime('%A, %B %d, %Y at %I:%M %p')}"
         if intent == "search":
-            # Try Wikipedia first, supplement with web search
             wiki = get_wiki_summary(query)
             wiki_ok = wiki and not wiki.startswith("I couldn't") and not wiki.startswith("I'm not sure")
             web = web_search(query)
-            if wiki_ok:
+            web_ok = web and not web.startswith("I'm having trouble") and not web.startswith("I searched the web but")
+            if wiki_ok and web_ok:
                 return f"Wikipedia: {wiki}\n\nWeb search: {web}"
-            return f"Web search results: {web}"
+            if wiki_ok:
+                return f"Wikipedia: {wiki}"
+            if web_ok:
+                return f"Web search: {web}"
+            return ""
     except Exception as e:
         logger.error(f"Context fetch error for intent={intent}: {e}")
     return ""
