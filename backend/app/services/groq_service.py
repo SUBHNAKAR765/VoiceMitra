@@ -18,6 +18,7 @@ def ask_groq(
     user_query: str,
     context: str = "",
     conversation_history: list[dict] = None,
+    language: str = "en",
 ) -> str:
     """
     Send a query to Groq LLM and return the response text.
@@ -34,6 +35,9 @@ def ask_groq(
         client = Groq(api_key=settings.groq_api_key)
 
         messages = [{"role": "system", "content": SYSTEM_PROMPT}]
+
+        if language and language != "en":
+            messages.append({"role": "system", "content": f"Always respond in the language with ISO code '{language}'. Do not switch languages."})
 
         # Inject prior conversation (last 6 turns max to stay within token limits)
         if conversation_history:

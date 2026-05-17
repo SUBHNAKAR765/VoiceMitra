@@ -2,6 +2,7 @@ import { NavLink, useNavigate } from 'react-router-dom'
 import { motion, AnimatePresence } from 'framer-motion'
 import { RiHome4Line, RiMicLine, RiSettings4Line, RiLogoutBoxRLine, RiUserLine } from 'react-icons/ri'
 import { useState } from 'react'
+import { useAppStore } from '../store/useAppStore'
 
 const links = [
   { to: '/', icon: RiHome4Line, label: 'Home' },
@@ -12,9 +13,11 @@ const links = [
 
 export default function Sidebar() {
   const navigate = useNavigate()
+  const { setUser } = useAppStore()
   const [isCollapsed, setIsCollapsed] = useState(false)
 
   const handleSignOut = () => {
+    setUser(null)
     navigate('/login')
   }
 

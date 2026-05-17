@@ -1,13 +1,15 @@
 import { useState } from 'react'
 import { motion } from 'framer-motion'
-import { Link, useNavigate } from 'react-router-dom'
+import { Link, useNavigate, Navigate } from 'react-router-dom'
 import { RiUserLine, RiLockLine, RiArrowRightLine } from 'react-icons/ri'
 import { useAppStore } from '../store/useAppStore'
 import { login } from '../api/client'
 
 export default function Login() {
   const navigate = useNavigate()
-  const { addToast, setUser } = useAppStore()
+  const { addToast, setUser, user } = useAppStore()
+
+  if (user) return <Navigate to="/" replace />
   const [username, setUsername] = useState('')
   const [password, setPassword] = useState('')
   const [loading, setLoading] = useState(false)

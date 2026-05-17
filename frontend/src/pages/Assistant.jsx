@@ -1,7 +1,7 @@
 import { useSearchParams } from 'react-router-dom'
 import { useRef, useEffect, useCallback, useState } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
-import { RiDeleteBin6Line, RiDownload2Line } from 'react-icons/ri'
+import { RiDeleteBin6Line, RiDownload2Line, RiVolumeDownLine, RiVolumeUpLine } from 'react-icons/ri'
 import { useAppStore } from '../store/useAppStore'
 import { useSpeech } from '../hooks/useSpeech'
 import { sendTextQuery, clearHistory } from '../api/client'
@@ -14,7 +14,7 @@ const uid = () => Math.random().toString(36).slice(2) + Date.now().toString(36)
 
 export default function Assistant() {
   const [searchParams, setSearchParams] = useSearchParams()
-  const { messages, addMessage, clearMessages, isRecording, isLoading, setLoading, addToast } = useAppStore()
+  const { messages, addMessage, clearMessages, isRecording, isLoading, setLoading, addToast, volume, setVolume, language, setLanguage } = useAppStore()
   const { start, stop, liveText } = useSpeech()
   const chatEndRef = useRef(null)
   const audioRef = useRef(null)
@@ -31,6 +31,7 @@ export default function Assistant() {
       const lastAudio = [...messages].reverse().find((m) => m.audio_url)
       if (lastAudio?.audio_url) {
         const audio = new Audio(lastAudio.audio_url)
+        audio.volume = volume
         audioRef.current = audio
         setCurrentAudio(audio)
         audio.onplay = () => setIsPlaying(true)
@@ -64,9 +65,10 @@ export default function Assistant() {
     addMessage({ id: uid(), role: 'user', content: text, timestamp: new Date().toISOString() })
     setLoading(true)
     try {
-      const { data } = await sendTextQuery(text)
+      const { data } = await sendTextQuery(text, language)
       addMessage({ id: uid(), role: 'assistant', content: data.response, timestamp: new Date().toISOString(), audio_url: data.audio_url })
       const audio = new Audio(data.audio_url)
+      audio.volume = volume
       audioRef.current = audio
       setCurrentAudio(audio)
       audio.onplay = () => setIsPlaying(true)
@@ -164,6 +166,31 @@ export default function Assistant() {
       {/* Controls */}
       <div className="glass p-4 md:p-6">
         <div className="flex items-center justify-between gap-4">
+          <div className="flex items-center gap-3">
+            <select
+              value={language}
+              onChange={(e) => setLanguage(e.target.value)}
+              className="bg-gray-900/60 border border-white/10 rounded-xl px-3 py-2 text-sm text-gray-200 focus:outline-none focus:border-cyan-500/50 cursor-pointer"
+            >
+              <option value="en">🇬🇧 English</option>
+              <option value="hi">🇮🇳 Hindi</option>
+              <option value="gu">🇮🇳 Gujarati</option>
+              <option value="ta">🇮🇳 Tamil</option>
+              <option value="te">🇮🇳 Telugu</option>
+              <option value="bn">🇮🇳 Bengali</option>
+              <option value="es">🇪🇸 Spanish</option>
+              <option value="fr">🇫🇷 French</option>
+              <option value="de">🇩🇪 German</option>
+              <option value="ar">🇸🇦 Arabic</option>
+              <option value="zh">🇨🇳 Chinese</option>
+              <option value="ja">🇯🇵 Japanese</option>
+              <option value="ko">🇰🇷 Korean</option>
+              <option value="pt">🇧🇷 Portuguese</option>
+              <option value="ru">🇷🇺 Russian</option>
+              <option value="it">🇮🇹 Italian</option>
+            </select>
+          </div>
+
           <div className="flex gap-2">
             <motion.button whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}
               onClick={handleClear} disabled={messages.length === 0}
@@ -190,13 +217,20 @@ export default function Assistant() {
             />
           </div>
 
-          <div className="w-28 text-right">
-            <p className={`text-xs font-medium transition-colors ${
-              isRecording ? 'text-red-400' : isLoading ? 'text-yellow-400' : isPlaying ? 'text-cyan-400' : 'text-gray-500'
-            }`}>
-              {isRecording ? '● Recording...' : isLoading ? '⟳ Processing...' : isPlaying ? '♫ Playing...' : ''}
-            </p>
-          </div>
+          <div className="flex items-center gap-2 w-28">
+              <RiVolumeDownLine className="text-gray-400 text-sm shrink-0" />
+              <input
+                type="range" min="0" max="1" step="0.05"
+                value={volume}
+                onChange={(e) => {
+                  const v = parseFloat(e.target.value)
+                  setVolume(v)
+                  if (audioRef.current) audioRef.current.volume = v
+                }}
+                className="w-full accent-cyan-400 cursor-pointer"
+              />
+              <RiVolumeUpLine className="text-gray-400 text-sm shrink-0" />
+            </div>
         </div>
       </div>
     </motion.div>

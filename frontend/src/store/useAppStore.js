@@ -30,6 +30,14 @@ export const useAppStore = create(
       },
       removeToast: (id) => set((s) => ({ toasts: s.toasts.filter((t) => t.id !== id) })),
 
+      // Volume (persisted)
+      volume: 0.5,
+      setVolume: (v) => set({ volume: v }),
+
+      // Language (persisted)
+      language: 'en',
+      setLanguage: (v) => set({ language: v }),
+
       // Settings
       settings: {
         ttsEngine: 'gtts',
@@ -43,7 +51,7 @@ export const useAppStore = create(
     {
       name: 'voicemitra-store',
       // Only persist messages, settings, and user data
-      partialize: (s) => ({ messages: s.messages, settings: s.settings, user: s.user }),
+      partialize: (s) => ({ messages: s.messages, settings: s.settings, user: s.user, volume: s.volume, language: s.language }),
     }
   )
 )

@@ -1,13 +1,15 @@
 import { useState } from 'react'
 import { motion } from 'framer-motion'
-import { Link, useNavigate } from 'react-router-dom'
+import { Link, useNavigate, Navigate } from 'react-router-dom'
 import { RiMailLine, RiLockLine, RiUserLine, RiArrowRightLine, RiHashtag } from 'react-icons/ri'
 import { useAppStore } from '../store/useAppStore'
 import { register } from '../api/client'
 
 export default function Register() {
   const navigate = useNavigate()
-  const { addToast, setUser } = useAppStore()
+  const { addToast, setUser, user } = useAppStore()
+
+  if (user) return <Navigate to="/" replace />
   const [name, setName] = useState('')
   const [email, setEmail] = useState('')
   const [username, setUsername] = useState('')

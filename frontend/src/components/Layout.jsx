@@ -1,9 +1,13 @@
-import { Outlet } from 'react-router-dom'
+import { Outlet, Navigate } from 'react-router-dom'
 import Sidebar from './Sidebar'
 import Header from './Header'
 import ParticleBackground from './ParticleBackground'
+import { useAppStore } from '../store/useAppStore'
 
 export default function Layout() {
+  const user = useAppStore((s) => s.user)
+  if (!user) return <Navigate to="/login" replace />
+
   return (
     <div className="flex h-screen overflow-hidden">
       <ParticleBackground />

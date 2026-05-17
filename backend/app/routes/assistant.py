@@ -27,7 +27,7 @@ logger = logging.getLogger(__name__)
 _history: deque = deque(maxlen=settings.max_history)
 
 
-async def _process_text_query(transcript: str) -> VoiceQueryResponse:
+async def _process_text_query(transcript: str, language: str = "en") -> VoiceQueryResponse:
     # 2. Moderation
     moderated = not is_safe(transcript)
     if moderated:
@@ -48,10 +48,11 @@ async def _process_text_query(transcript: str) -> VoiceQueryResponse:
             user_query=transcript,
             context=context,
             conversation_history=history,
+            language=language,
         )
 
     # 7. TTS
-    audio_filename = await synthesize_speech(response_text)
+    audio_filename = await synthesize_speech(response_text, language)
     audio_url = f"/audio/{audio_filename}"
 
     # 8. Save to history
@@ -94,7 +95,7 @@ async def voice_query(audio: UploadFile = File(...)):
 
 @router.post("/text-query", response_model=VoiceQueryResponse)
 async def text_query(req: TextQueryRequest):
-    return await _process_text_query(req.text)
+    return await _process_text_query(req.text, req.language)
 
 
 @router.get("/history", response_model=List[ChatMessage])

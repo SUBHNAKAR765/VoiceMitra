@@ -7,7 +7,7 @@ logger = logging.getLogger(__name__)
 settings = get_settings()
 
 
-async def synthesize_speech(text: str) -> str:
+async def synthesize_speech(text: str, language: str = "en") -> str:
     """Generate TTS audio, return filename (not full path)."""
     filename = f"{uuid.uuid4().hex}.mp3"
     filepath = os.path.join(settings.audio_dir_abs, filename)
@@ -17,9 +17,9 @@ async def synthesize_speech(text: str) -> str:
     if engine == "elevenlabs":
         return await _elevenlabs_synthesize(text, filepath, filename)
     elif engine == "edge":
-        return await _edge_synthesize(text, filepath, filename)
+        return await _edge_synthesize(text, filepath, filename, language)
     elif engine == "gtts":
-        return _gtts_synthesize(text, filepath, filename)
+        return _gtts_synthesize(text, filepath, filename, language)
     return _pyttsx3_synthesize(text, filepath, filename)
 
 
@@ -44,14 +44,14 @@ async def _elevenlabs_synthesize(text: str, filepath: str, filename: str) -> str
     return filename
 
 
-def _gtts_synthesize(text: str, filepath: str, filename: str) -> str:
+def _gtts_synthesize(text: str, filepath: str, filename: str, language: str = "en") -> str:
     from gtts import gTTS
-    tts = gTTS(text=text, lang="en", slow=False)
+    tts = gTTS(text=text, lang=language, slow=False)
     tts.save(filepath)
     return filename
 
 
-def _pyttsx3_synthesize(text: str, filepath: str, filename: str) -> str:
+def _pyttsx3_synthesize(text: str, filepath: str, filename: str, language: str = "en") -> str:
     try:
         import pyttsx3
         engine = pyttsx3.init()
@@ -61,13 +61,32 @@ def _pyttsx3_synthesize(text: str, filepath: str, filename: str) -> str:
         engine.runAndWait()
         return filename
     except Exception:
-        # pyttsx3 requires an audio device — fallback to gTTS on servers
-        return _gtts_synthesize(text, filepath, filename)
+        return _gtts_synthesize(text, filepath, filename, language)
 
 
-async def _edge_synthesize(text: str, filepath: str, filename: str) -> str:
+EDGE_VOICES = {
+    "en": "en-IN-NeerjaNeural",
+    "hi": "hi-IN-SwaraNeural",
+    "es": "es-ES-ElviraNeural",
+    "fr": "fr-FR-DeniseNeural",
+    "de": "de-DE-KatjaNeural",
+    "ar": "ar-SA-ZariyahNeural",
+    "zh": "zh-CN-XiaoxiaoNeural",
+    "ja": "ja-JP-NanamiNeural",
+    "ko": "ko-KR-SunHiNeural",
+    "pt": "pt-BR-FranciscaNeural",
+    "ru": "ru-RU-SvetlanaNeural",
+    "it": "it-IT-ElsaNeural",
+    "gu": "gu-IN-DhwaniNeural",
+    "ta": "ta-IN-PallaviNeural",
+    "te": "te-IN-ShrutiNeural",
+    "bn": "bn-IN-TanishaaNeural",
+}
+
+
+async def _edge_synthesize(text: str, filepath: str, filename: str, language: str = "en") -> str:
     import edge_tts
-    voice = "en-IN-NeerjaNeural"
+    voice = EDGE_VOICES.get(language, EDGE_VOICES["en"])
     communicate = edge_tts.Communicate(text, voice, rate="-5%", pitch="+0Hz", volume="+20%")
     await communicate.save(filepath)
     return filename

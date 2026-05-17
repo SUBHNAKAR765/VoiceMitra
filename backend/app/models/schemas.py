@@ -20,6 +20,7 @@ class VoiceQueryResponse(BaseModel):
 
 class TextQueryRequest(BaseModel):
     text: str
+    language: str = "en"
 
 class YoutubeTranscriptRequest(BaseModel):
     url: str
