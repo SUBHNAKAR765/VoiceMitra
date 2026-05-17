@@ -13,22 +13,7 @@ class Settings(BaseSettings):
     max_history: int = 50
     ffmpeg_dir: str = ""
 
-    # Railway individual MySQL vars (auto-injected by Railway MySQL plugin)
-    mysqlhost: str = ""
-    mysqlport: int = 3306
-    mysqluser: str = ""
-    mysqlpassword: str = ""
-    mysqldatabase: str = ""
 
-    # Fallback individual vars for local dev
-    db_host: str = "localhost"
-    db_user: str = "root"
-    db_password: str = ""
-    db_name: str = "voicemitra"
-    db_port: int = 3306
-
-    # Full URL fallback
-    database_url: str = ""
 
     @property
     def audio_dir_abs(self) -> str:
