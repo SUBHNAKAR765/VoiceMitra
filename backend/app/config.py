@@ -14,11 +14,11 @@ class Settings(BaseSettings):
     ffmpeg_dir: str = ""
 
     # Railway individual MySQL vars (auto-injected by Railway MySQL plugin)
-    mysql_host: str = ""
-    mysql_port: int = 3306
-    mysql_user: str = ""
-    mysql_password: str = ""
-    mysql_database: str = ""
+    mysqlhost: str = ""
+    mysqlport: int = 3306
+    mysqluser: str = ""
+    mysqlpassword: str = ""
+    mysqldatabase: str = ""
 
     # Fallback individual vars for local dev
     db_host: str = "localhost"

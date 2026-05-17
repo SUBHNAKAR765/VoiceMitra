@@ -18,11 +18,11 @@ import csv
 import os
 
 # ── Connection config ─────────────────────────────────────────────────────────
-MYSQL_HOST     = os.environ.get("MYSQL_HOST",     "localhost")
-MYSQL_PORT     = int(os.environ.get("MYSQL_PORT", 3306))
-MYSQL_USER     = os.environ.get("MYSQL_USER",     "root")
-MYSQL_PASSWORD = os.environ.get("MYSQL_PASSWORD", "")
-MYSQL_DATABASE = os.environ.get("MYSQL_DATABASE", "voicemitra")
+MYSQL_HOST     = os.environ.get("MYSQLHOST",     "localhost")
+MYSQL_PORT     = int(os.environ.get("MYSQLPORT",   3306))
+MYSQL_USER     = os.environ.get("MYSQLUSER",     "root")
+MYSQL_PASSWORD = os.environ.get("MYSQLPASSWORD", "")
+MYSQL_DATABASE = os.environ.get("MYSQLDATABASE", "voicemitra")
 
 IS_REMOTE = MYSQL_HOST != "localhost"
 
