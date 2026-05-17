@@ -1,12 +1,11 @@
 import { NavLink, useNavigate } from 'react-router-dom'
 import { motion, AnimatePresence } from 'framer-motion'
-import { RiHome4Line, RiMicLine, RiSettings4Line, RiYoutubeLine, RiLogoutBoxRLine, RiUserLine } from 'react-icons/ri'
+import { RiHome4Line, RiMicLine, RiSettings4Line, RiLogoutBoxRLine, RiUserLine } from 'react-icons/ri'
 import { useState } from 'react'
 
 const links = [
   { to: '/', icon: RiHome4Line, label: 'Home' },
   { to: '/assistant', icon: RiMicLine, label: 'Assistant' },
-  { to: '/youtube', icon: RiYoutubeLine, label: 'YouTube' },
   { to: '/settings', icon: RiSettings4Line, label: 'Settings' },
   { to: '/profile', icon: RiUserLine, label: 'Profile' },
 ]

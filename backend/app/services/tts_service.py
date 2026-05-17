@@ -7,16 +7,41 @@ logger = logging.getLogger(__name__)
 settings = get_settings()
 
 
-def synthesize_speech(text: str) -> str:
+async def synthesize_speech(text: str) -> str:
     """Generate TTS audio, return filename (not full path)."""
     filename = f"{uuid.uuid4().hex}.mp3"
     filepath = os.path.join(settings.audio_dir_abs, filename)
 
     engine = settings.tts_engine.lower()
 
-    if engine == "gtts":
+    if engine == "elevenlabs":
+        return await _elevenlabs_synthesize(text, filepath, filename)
+    elif engine == "edge":
+        return await _edge_synthesize(text, filepath, filename)
+    elif engine == "gtts":
         return _gtts_synthesize(text, filepath, filename)
     return _pyttsx3_synthesize(text, filepath, filename)
+
+
+async def _elevenlabs_synthesize(text: str, filepath: str, filename: str) -> str:
+    import httpx
+    url = f"https://api.elevenlabs.io/v1/text-to-speech/{settings.elevenlabs_voice_id}"
+    headers = {
+        "xi-api-key": settings.elevenlabs_api_key,
+        "Content-Type": "application/json",
+    }
+    payload = {
+        "text": text,
+        "model_id": "eleven_multilingual_v2",
+        "voice_settings": {"stability": 0.30, "similarity_boost": 0.95, "style": 0.60, "use_speaker_boost": True},
+        "speed": 0.60,
+    }
+    async with httpx.AsyncClient(timeout=30) as client:
+        response = await client.post(url, json=payload, headers=headers)
+        response.raise_for_status()
+    with open(filepath, "wb") as f:
+        f.write(response.content)
+    return filename
 
 
 def _gtts_synthesize(text: str, filepath: str, filename: str) -> str:
@@ -34,3 +59,12 @@ def _pyttsx3_synthesize(text: str, filepath: str, filename: str) -> str:
     engine.save_to_file(text, filepath)
     engine.runAndWait()
     return filename
+
+
+async def _edge_synthesize(text: str, filepath: str, filename: str) -> str:
+    import edge_tts
+    voice = "en-IN-NeerjaNeural"
+    communicate = edge_tts.Communicate(text, voice, rate="-10%", pitch="-10Hz", volume="+20%")
+    await communicate.save(filepath)
+    return filename
+

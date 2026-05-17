@@ -28,28 +28,30 @@ VoiceMitra lets a user:
 - **Speak into the microphone** — the browser captures speech in real time using the Web Speech API
 - **Ask questions by text** — a text input fallback is also available
 - **Get an AI-generated spoken response** — Groq LLM (LLaMA 3.3 70B) generates a natural, conversational answer
-- **Hear the response played back** — gTTS or pyttsx3 converts the answer to an MP3 and plays it in the browser
+- **Hear the response played back** — gTTS, pyttsx3, ElevenLabs, or Edge TTS converts the answer to an MP3 and plays it in the browser
 - **Transcribe any YouTube video** — paste a URL and get a full timestamped transcript
 - **Log in / Register** — CGU student accounts stored in MySQL, authenticated with bcrypt-hashed passwords
+- **Search the header bar** — type a query in the top search bar to send it directly to the assistant
 
 ---
 
 ## Tech Stack
 
-| Layer        | Technology                                                   |
-|--------------|--------------------------------------------------------------|
-| Frontend     | React 18, Vite, TailwindCSS, Framer Motion                   |
-| State Mgmt   | Zustand (with localStorage persistence)                      |
-| Backend      | FastAPI, Uvicorn, Python 3.11                                |
-| LLM          | Groq API — LLaMA 3.3 70B Versatile                          |
-| STT          | faster-whisper (OpenAI Whisper, runs locally on CPU)         |
-| Browser STT  | Web Speech API (SpeechRecognition)                           |
-| TTS          | gTTS (Google Text-to-Speech) / pyttsx3 (offline fallback)   |
-| Web Search   | DuckDuckGo Search (no API key needed)                        |
-| YouTube      | yt-dlp (audio download) + faster-whisper (transcription)    |
-| Database     | MySQL 8.4 (schema: `voicemitra`, table: `students`)          |
-| Auth         | bcrypt password hashing                                      |
-| HTTP Client  | Axios                                                        |
+| Layer        | Technology                                                                 |
+|--------------|----------------------------------------------------------------------------|
+| Frontend     | React 18, Vite, TailwindCSS, Framer Motion                                 |
+| State Mgmt   | Zustand (with localStorage persistence)                                    |
+| Backend      | FastAPI, Uvicorn, Python 3.11                                              |
+| LLM          | Groq API — LLaMA 3.3 70B Versatile                                        |
+| STT          | faster-whisper (OpenAI Whisper, runs locally on CPU)                       |
+| Browser STT  | Web Speech API (SpeechRecognition)                                         |
+| TTS          | gTTS / pyttsx3 (offline) / ElevenLabs (premium) / Edge TTS (neural)       |
+| Web Search   | DuckDuckGo Search (no API key needed)                                      |
+| YouTube      | yt-dlp (audio download) + faster-whisper (transcription)                  |
+| Database     | MySQL 8.x (schema: `voicemitra`, table: `students`)                        |
+| Auth         | bcrypt password hashing                                                    |
+| HTTP Client  | Axios                                                                      |
+| Audio Visual | WaveSurfer.js                                                              |
 
 ---
 
@@ -62,11 +64,11 @@ Browser (React)
     ▼
 FastAPI Backend (port 8000)
     │
-    ├── /api/voice-query   ← audio file upload
-    ├── /api/text-query    ← plain text
-    ├── /api/history       ← conversation history
-    ├── /api/login         ← student auth
-    ├── /api/register      ← student registration
+    ├── /api/voice-query        ← audio file upload
+    ├── /api/text-query         ← plain text
+    ├── /api/history            ← conversation history
+    ├── /api/login              ← student auth
+    ├── /api/register           ← student registration
     └── /api/youtube/transcribe ← YouTube URL
     │
     ├── faster-whisper     (local STT — audio → text)
@@ -74,7 +76,7 @@ FastAPI Backend (port 8000)
     ├── Moderation         (keyword blocklist)
     ├── Context Fetchers   (weather, news, wiki, web search)
     ├── Groq LLM           (generates final natural response)
-    ├── gTTS / pyttsx3     (text → MP3 file)
+    ├── gTTS / pyttsx3 / ElevenLabs / Edge TTS  (text → MP3 file)
     └── MySQL              (student accounts)
 ```
 
@@ -96,7 +98,7 @@ VoiceMitra/
 │   │   │   └── youtube.py           ← /youtube/transcribe
 │   │   └── services/
 │   │       ├── stt_service.py       ← faster-whisper transcription
-│   │       ├── tts_service.py       ← gTTS / pyttsx3 speech synthesis
+│   │       ├── tts_service.py       ← gTTS / pyttsx3 / ElevenLabs / Edge TTS
 │   │       ├── groq_service.py      ← Groq LLM API calls
 │   │       ├── intent_service.py    ← regex intent classifier
 │   │       ├── moderation_service.py← keyword-based content filter
@@ -104,30 +106,36 @@ VoiceMitra/
 │   │       ├── news_service.py      ← news via DuckDuckGo search
 │   │       ├── wiki_service.py      ← Wikipedia REST API
 │   │       ├── search_service.py    ← DuckDuckGo web search
+│   │       ├── answer_service.py    ← static greeting/time/date responses
 │   │       ├── youtube_service.py   ← yt-dlp + faster-whisper
 │   │       └── db_service.py        ← MySQL connection
 │   ├── audio_files/                 ← generated MP3 responses (served as static files)
 │   ├── seed_students.py             ← one-time script to populate DB from CGUStudentsData.txt
 │   ├── CGUStudentsData.txt          ← tab-separated student data (Name, Roll Number, Email)
 │   ├── requirements.txt
+│   ├── run.py                       ← convenience script to start uvicorn
 │   ├── .env                         ← secrets (not committed)
 │   └── .env.example
 ├── frontend/
+│   ├── public/
+│   │   └── logo.png
 │   ├── src/
 │   │   ├── App.jsx                  ← route definitions
+│   │   ├── main.jsx                 ← React entry point
+│   │   ├── index.css                ← Tailwind + global styles
 │   │   ├── api/client.js            ← all Axios API calls
 │   │   ├── store/useAppStore.js     ← Zustand global state
 │   │   ├── hooks/useSpeech.js       ← Web Speech API + silence detection
 │   │   ├── components/
 │   │   │   ├── Layout.jsx           ← sidebar + main content wrapper
-│   │   │   ├── Header.jsx
-│   │   │   ├── Sidebar.jsx
+│   │   │   ├── Header.jsx           ← search bar + notifications + profile dropdown
+│   │   │   ├── Sidebar.jsx          ← collapsible nav with sign out
 │   │   │   ├── ChatPanel.jsx        ← renders message bubbles
 │   │   │   ├── MicButton.jsx        ← animated record button
 │   │   │   ├── PlayPauseButton.jsx  ← audio playback control
 │   │   │   ├── Waveform.jsx         ← WaveSurfer.js audio visualizer
 │   │   │   ├── Toast.jsx            ← notification toasts
-│   │   │   └── ParticleBackground.jsx
+│   │   │   └── ParticleBackground.jsx ← canvas particle animation
 │   │   └── pages/
 │   │       ├── Home.jsx             ← landing / quick-start page
 │   │       ├── Assistant.jsx        ← main voice/text chat interface
@@ -138,8 +146,13 @@ VoiceMitra/
 │   │       └── Settings.jsx
 │   ├── package.json
 │   ├── vite.config.js
-│   └── tailwind.config.js
-└── docker-compose.yml
+│   ├── tailwind.config.js
+│   ├── postcss.config.js
+│   ├── index.html
+│   ├── nginx.conf
+│   └── Dockerfile
+├── docker-compose.yml
+└── README.md
 ```
 
 ---
@@ -152,10 +165,11 @@ VoiceMitra/
 - Mounts the `audio_files/` directory as a static file server at `/audio` so the frontend can stream MP3s
 - Registers three routers under the `/api` prefix: `assistant`, `youtube`, `auth`
 - Exposes a `GET /health` endpoint returning `{ "status": "ok", "version": "1.0.0" }`
+- Exposes a `GET /` root endpoint with links to docs and health check
 
 ### `config.py`
 - Uses `pydantic-settings` to load all config from `.env`
-- Key settings: `GROQ_API_KEY`, `GROQ_MODEL`, `TTS_ENGINE`, `WHISPER_MODEL`, `AUDIO_DIR`, `MAX_HISTORY`, `FFMPEG_DIR`
+- Key settings: `GROQ_API_KEY`, `GROQ_MODEL`, `TTS_ENGINE`, `WHISPER_MODEL`, `AUDIO_DIR`, `MAX_HISTORY`, `FFMPEG_DIR`, `ELEVENLABS_API_KEY`, `ELEVENLABS_VOICE_ID`
 - Cached with `@lru_cache()` so the `.env` file is only read once
 
 ### `routes/assistant.py` — Core Logic
@@ -190,8 +204,11 @@ transcript → moderation check → intent classification → context fetch → 
 
 #### `tts_service.py` — Text-to-Speech
 - Generates a UUID-named `.mp3` file in `audio_files/`
+- **ElevenLabs** (premium): calls ElevenLabs API with configurable voice ID and settings
+- **Edge TTS** (neural, free): uses Microsoft Edge neural voices via `edge-tts`; voice `en-IN-NeerjaNeural` with `rate=-10%`, `pitch=-10Hz`, `volume=+20%` for a bold, heavy, natural Indian sound
 - **gTTS** (default): calls Google's TTS API, saves MP3
 - **pyttsx3** (offline fallback): uses system TTS engine, speech rate 175 wpm
+- Engine is selected via `TTS_ENGINE` env variable: `elevenlabs`, `edge`, `gtts`, or `pyttsx3`
 - Returns just the filename; the URL is constructed as `/audio/<filename>`
 
 #### `groq_service.py` — LLM
@@ -211,6 +228,10 @@ transcript → moderation check → intent classification → context fetch → 
 - Keyword blocklist approach — checks for harmful/inappropriate words
 - `is_safe()` returns `False` if any blocked keyword is found in the cleaned text
 - Blocked queries get a polite refusal response without calling Groq
+
+#### `answer_service.py` — Static Responses
+- Provides pre-built responses for greetings, current time, and current date
+- Used as a fast-path fallback before calling Groq for simple intents
 
 #### `weather_service.py`
 - Extracts city name from the query using regex patterns
@@ -264,6 +285,7 @@ All backend calls go through a single Axios instance with `baseURL: '/api'`:
 - `fetchHistory()` / `clearHistory()`
 - `transcribeYoutube(url)`
 - `login(username, password)` / `register(userData)`
+- `checkHealth()` — GET `/health`
 
 ### `hooks/useSpeech.js` — Voice Recording
 - Uses the browser's **Web Speech API** (`SpeechRecognition`) for live transcription
@@ -276,10 +298,11 @@ The core page of the app:
 - **Mic button** → calls `useSpeech.start()` → on silence or manual stop → calls `useSpeech.stop()` → gets transcript → calls `sendTextQuery()`
 - Displays live transcript while recording
 - Auto-plays the MP3 response from the backend
-- **Waveform** (WaveSurfer.js) visualizes the audio response
+- **Waveform** (WaveSurfer.js) visualizes the audio response — only reloads when `audioUrl` changes
 - **Play/Pause button** to replay the last response
 - **Clear** button wipes local messages + calls `DELETE /api/history`
 - **Download** button exports the full conversation as a `.txt` file
+- Supports `?q=` URL query param — navigating to `/assistant?q=hello` auto-submits the query
 
 ### `pages/Youtube.jsx` — YouTube Transcriber
 - User pastes a YouTube URL and clicks Transcribe
@@ -288,29 +311,56 @@ The core page of the app:
 - Search bar to filter segments by keyword
 - Export options: Copy All, Download as TXT, Download as SRT subtitle file
 
+### `pages/Home.jsx` — Landing Page
+- Hero section with animated logo rings
+- Feature cards for Weather, News, Wikipedia, Time & Date — clicking a card navigates to `/assistant?q=<query>`
+
 ### `pages/Login.jsx` / `Register.jsx`
 - Login accepts username, roll number, or email
 - On success, stores user object in Zustand store (persisted to localStorage)
 - Glassmorphism card UI with animated background blobs
 
+### `pages/Profile.jsx`
+- Displays logged-in student's full name, email, username, roll number, and user ID
+- Shows account status badge
+
+### `pages/Settings.jsx`
+- Toggle between TTS engines (gTTS / pyttsx3)
+- Settings saved to Zustand store (persisted in localStorage)
+
+### `components/Header.jsx`
+- Search bar — submits query to `/assistant?q=<query>`
+- Notifications dropdown with unread badge
+- Profile dropdown with links to Profile, Settings, and Sign Out
+
+### `components/Sidebar.jsx`
+- Collapsible navigation (click logo to toggle)
+- Nav links: Home, Assistant, Settings, Profile
+- Sign Out button at the bottom
+
+### `components/Waveform.jsx`
+- WaveSurfer.js visualizer — loads audio from URL only when `audioUrl` changes
+- Shows animated bar equalizer while recording
+- Standalone from the playback `Audio` element to avoid redundant fetches
+
 ---
 
 ## Database
 
-**Schema:** `voicemitra`  
+**Schema:** `voicemitra`
 **Table:** `students`
 
-| Column       | Type          | Notes                          |
-|--------------|---------------|--------------------------------|
-| `id`         | INT PK AI     | Auto-increment                 |
-| `name`       | VARCHAR(150)  | Full name                      |
-| `roll_number`| VARCHAR(20)   | Unique, used as login ID       |
-| `username`   | VARCHAR(20)   | Unique (defaults to roll number)|
-| `email`      | VARCHAR(150)  | Unique                         |
-| `password`   | VARCHAR(255)  | bcrypt hash                    |
-| `created_at` | TIMESTAMP     | Auto-set on insert             |
+| Column        | Type          | Notes                           |
+|---------------|---------------|---------------------------------|
+| `id`          | INT PK AI     | Auto-increment                  |
+| `name`        | VARCHAR(150)  | Full name                       |
+| `roll_number` | VARCHAR(20)   | Unique, used as login ID        |
+| `username`    | VARCHAR(20)   | Unique (defaults to roll number)|
+| `email`       | VARCHAR(150)  | Unique                          |
+| `password`    | VARCHAR(255)  | bcrypt hash                     |
+| `created_at`  | TIMESTAMP     | Auto-set on insert              |
 
-**Seeding:** `seed_students.py` reads `CGUStudentsData.txt` (tab-separated: Name, Roll Number, Email), hashes a default password (`Student@123`), and bulk-inserts all 493 CGU students.
+**Seeding:** `seed_students.py` reads `CGUStudentsData.txt` (tab-separated: Name, Roll Number, Email), hashes a default password (`Student@123`), and bulk-inserts all CGU students.
 
 ---
 
@@ -326,14 +376,14 @@ The core page of the app:
 6. Backend: intent classification (regex)
    └── greeting / weather / news / time / date / search
 7. Backend: fetch context data
-   └── weather → DuckDuckGo search "current weather <city>"
-   └── news    → DuckDuckGo search "latest news"
-   └── search  → Wikipedia + DuckDuckGo top snippets
+   └── weather  → DuckDuckGo search "current weather <city>"
+   └── news     → DuckDuckGo search "latest news"
+   └── search   → Wikipedia + DuckDuckGo top snippets
    └── time/date → current datetime string
 8. Backend: call Groq LLM (LLaMA 3.3 70B)
    └── system prompt + last 6 conversation turns + context + user query
    └── returns concise spoken-style response (max 300 tokens)
-9. Backend: gTTS converts response text → UUID.mp3 saved to audio_files/
+9. Backend: TTS engine converts response text → UUID.mp3 saved to audio_files/
 10. Backend: returns { transcript, response, audio_url, intent, moderated }
 11. Frontend: adds messages to chat, auto-plays the MP3
 12. WaveSurfer.js renders the audio waveform
@@ -371,7 +421,7 @@ Returns array of `ChatMessage` objects (up to 50).
 Clears conversation history. Returns `{ "message": "History cleared" }`.
 
 ### `POST /api/login`
-**Request:** `{ "username": "CGU001", "password": "Student@123" }`  
+**Request:** `{ "username": "CGU001", "password": "Student@123" }`
 Username can be roll number, username, or email.
 
 **Response:** `{ "id": 1, "name": "...", "username": "...", "email": "...", "roll_number": "..." }`
@@ -400,15 +450,17 @@ Returns `{ "status": "ok", "version": "1.0.0" }`.
 
 Create `backend/.env` from `backend/.env.example`:
 
-| Variable          | Description                                   | Default                    |
-|-------------------|-----------------------------------------------|----------------------------|
-| `GROQ_API_KEY`    | Groq API key (get from console.groq.com)      | required                   |
-| `GROQ_MODEL`      | Groq model name                               | `llama-3.3-70b-versatile`  |
-| `TTS_ENGINE`      | `gtts` (online) or `pyttsx3` (offline)        | `gtts`                     |
-| `WHISPER_MODEL`   | `tiny`, `base`, `small`, `medium`             | `base`                     |
-| `AUDIO_DIR`       | Folder for generated MP3 files                | `audio_files`              |
-| `MAX_HISTORY`     | Max messages kept in memory                   | `50`                       |
-| `FFMPEG_DIR`      | Path to ffmpeg bin (required for yt-dlp)      | (auto-detected if on PATH) |
+| Variable               | Description                                      | Default                    |
+|------------------------|--------------------------------------------------|----------------------------|
+| `GROQ_API_KEY`         | Groq API key (get from console.groq.com)         | required                   |
+| `GROQ_MODEL`           | Groq model name                                  | `llama-3.3-70b-versatile`  |
+| `TTS_ENGINE`           | `gtts`, `pyttsx3`, `elevenlabs`, or `edge`       | `gtts`                     |
+| `ELEVENLABS_API_KEY`   | ElevenLabs API key (only if TTS_ENGINE=elevenlabs)| `""`                      |
+| `ELEVENLABS_VOICE_ID`  | ElevenLabs voice ID                              | `EXAVITQu4vr4xnSDxMaL`    |
+| `WHISPER_MODEL`        | `tiny`, `base`, `small`, `medium`                | `base`                     |
+| `AUDIO_DIR`            | Folder for generated MP3 files                   | `audio_files`              |
+| `MAX_HISTORY`          | Max messages kept in memory                      | `50`                       |
+| `FFMPEG_DIR`           | Path to ffmpeg bin (required for yt-dlp)         | (auto-detected if on PATH) |
 
 ---
 
@@ -437,7 +489,7 @@ copy .env.example .env
 ### 2. Database Setup
 
 ```bash
-# Run once to create the voicemitra DB and seed all 493 students
+# Run once to create the voicemitra DB and seed all students
 python seed_students.py
 ```
 
@@ -447,7 +499,7 @@ python seed_students.py
 uvicorn app.main:app --reload --port 8000
 ```
 
-API available at: http://localhost:8000  
+API available at: http://localhost:8000
 Swagger docs at: http://localhost:8000/docs
 
 ### 4. Frontend Setup
@@ -460,26 +512,29 @@ npm run dev
 
 Frontend at: http://localhost:5173
 
-> Vite proxies `/api` and `/audio` requests to `http://localhost:8000` automatically.
+> Vite proxies `/api`, `/audio`, and `/health` requests to `http://localhost:8000` automatically.
 
 ---
 
 ## Key Design Decisions
 
-**Why Groq instead of OpenAI?**  
+**Why Groq instead of OpenAI?**
 Groq provides extremely fast inference (LLaMA 3.3 70B) with a generous free tier — ideal for a real-time voice assistant where response latency matters.
 
-**Why faster-whisper instead of the original Whisper?**  
+**Why faster-whisper instead of the original Whisper?**
 faster-whisper uses CTranslate2 under the hood, making it 4x faster and using less memory than the original OpenAI Whisper while producing identical accuracy. It runs on CPU with int8 quantization.
 
-**Why DuckDuckGo for weather/news instead of dedicated APIs?**  
+**Why DuckDuckGo for weather/news instead of dedicated APIs?**
 No API key required, no rate limits for moderate usage, and the results are current. The Groq LLM then synthesizes the raw search snippets into a natural spoken response.
 
-**Why Web Speech API for browser STT instead of sending audio to Whisper?**  
+**Why Web Speech API for browser STT instead of sending audio to Whisper?**
 The Web Speech API gives instant live transcription with zero latency — the user sees their words appear as they speak. Whisper is used for the YouTube transcription feature where accuracy and timestamps matter more than speed.
 
-**Why in-memory history instead of a database?**  
+**Why in-memory history instead of a database?**
 Conversation history is session-scoped and doesn't need to persist across server restarts. A `deque(maxlen=50)` is simple, fast, and sufficient. The frontend also persists messages in localStorage via Zustand.
 
-**Why bcrypt for passwords?**  
+**Why bcrypt for passwords?**
 bcrypt is the industry standard for password hashing — it's slow by design (making brute-force attacks impractical) and includes a salt automatically.
+
+**Why separate the Waveform from the playback Audio element?**
+WaveSurfer.js is used purely for visualization. Keeping it decoupled from the `Audio` element used for playback prevents WaveSurfer from re-fetching the audio file on every play/pause state change, eliminating redundant network requests.

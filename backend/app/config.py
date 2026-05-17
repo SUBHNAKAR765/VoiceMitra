@@ -8,6 +8,8 @@ class Settings(BaseSettings):
     tts_engine: str = "gtts"
     whisper_model: str = "base"
     audio_dir: str = "audio_files"
+    elevenlabs_api_key: str = ""
+    elevenlabs_voice_id: str = "EXAVITQu4vr4xnSDxMaL"
 
     @property
     def audio_dir_abs(self) -> str:

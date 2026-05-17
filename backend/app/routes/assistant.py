@@ -51,7 +51,7 @@ async def _process_text_query(transcript: str) -> VoiceQueryResponse:
         )
 
     # 7. TTS
-    audio_filename = synthesize_speech(response_text)
+    audio_filename = await synthesize_speech(response_text)
     audio_url = f"/audio/{audio_filename}"
 
     # 8. Save to history
