@@ -4,7 +4,7 @@ import { motion, AnimatePresence } from 'framer-motion'
 import { RiDeleteBin6Line, RiDownload2Line, RiVolumeDownLine, RiVolumeUpLine } from 'react-icons/ri'
 import { useAppStore } from '../store/useAppStore'
 import { useSpeech } from '../hooks/useSpeech'
-import { sendTextQuery, clearHistory } from '../api/client'
+import { sendTextQuery, sendVoiceQuery, clearHistory } from '../api/client'
 import MicButton from '../components/MicButton'
 import PlayPauseButton from '../components/PlayPauseButton'
 import ChatPanel from '../components/ChatPanel'
@@ -96,28 +96,57 @@ export default function Assistant() {
     }
   }, [searchParams, setSearchParams, processText])
 
+  const handleResult = useCallback(async (result) => {
+    if (!result) return
+    if (result.type === 'text') {
+      if (!result.value?.trim()) {
+        addToast({ type: 'error', message: 'No speech detected. Please try again.' })
+        return
+      }
+      await processText(result.value)
+    } else if (result.type === 'blob') {
+      if (!result.value) {
+        addToast({ type: 'error', message: 'No audio recorded. Please try again.' })
+        return
+      }
+      stopAudio()
+      setLoading(true)
+      try {
+        const { data } = await sendVoiceQuery(result.value)
+        addMessage({ id: uid(), role: 'user', content: data.transcript, timestamp: new Date().toISOString() })
+        addMessage({ id: uid(), role: 'assistant', content: data.response, timestamp: new Date().toISOString(), audio_url: data.audio_url })
+        const audio = new Audio(data.audio_url)
+        audio.volume = volume
+        audioRef.current = audio
+        setCurrentAudio(audio)
+        audio.onplay = () => setIsPlaying(true)
+        audio.onpause = () => setIsPlaying(false)
+        audio.onended = () => { setIsPlaying(false); audioRef.current = null; setCurrentAudio(null) }
+        audio.onerror = () => { setIsPlaying(false); audioRef.current = null; setCurrentAudio(null) }
+        audio.play().catch(() => {})
+        if (data.moderated) addToast({ type: 'error', message: 'Query was flagged by moderation.' })
+      } catch (err) {
+        addToast({ type: 'error', message: err.response?.data?.detail || 'Something went wrong.' })
+      } finally {
+        setLoading(false)
+      }
+    }
+  }, [processText, stopAudio, addMessage, addToast, setLoading, volume])
+
   const handleMicClick = useCallback(async () => {
     if (isLoading) return
     if (!isRecording) {
       try {
         await start(async () => {
-          const finalTranscript = await stop()
-          if (!finalTranscript?.trim()) {
-            addToast({ type: 'error', message: 'No speech detected. Please try again.' })
-            return
-          }
-          await processText(finalTranscript)
+          const result = await stop()
+          await handleResult(result)
         })
       } catch (e) {}
     } else {
-      const finalTranscript = await stop()
-      if (!finalTranscript?.trim()) {
-        addToast({ type: 'error', message: 'No speech detected. Please try again.' })
-        return
-      }
-      await processText(finalTranscript)
+      const result = await stop()
+      await handleResult(result)
     }
-  }, [isRecording, isLoading, start, stop, processText, addToast])
+  }, [isRecording, isLoading, start, stop, handleResult])
 
   const handleClear = async () => {
     stopAudio()

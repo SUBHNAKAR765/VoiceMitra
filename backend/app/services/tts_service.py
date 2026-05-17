@@ -67,6 +67,6 @@ def _pyttsx3_synthesize(text: str, filepath: str, filename: str) -> str:
 
 async def _edge_synthesize(text: str, filepath: str, filename: str) -> str:
     import edge_tts
-    communicate = edge_tts.Communicate(text, INDIAN_FEMALE_VOICE, rate="-5%", pitch="+2Hz", volume="+0%")
+    communicate = edge_tts.Communicate(text, INDIAN_FEMALE_VOICE, rate="-12%", pitch="-4Hz", volume="+10%")
     await communicate.save(filepath)
     return filename

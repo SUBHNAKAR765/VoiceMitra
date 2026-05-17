@@ -3,8 +3,9 @@ import axios from 'axios'
 const api = axios.create({ baseURL: '/api' })
 
 export const sendVoiceQuery = (audioBlob) => {
+  const ext = audioBlob.type.includes('mp4') ? 'mp4' : audioBlob.type.includes('ogg') ? 'ogg' : 'webm'
   const form = new FormData()
-  form.append('audio', audioBlob, 'recording.webm')
+  form.append('audio', audioBlob, `recording.${ext}`)
   return api.post('/voice-query', form, {
     headers: { 'Content-Type': 'multipart/form-data' },
   })
