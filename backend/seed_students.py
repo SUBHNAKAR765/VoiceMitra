@@ -35,7 +35,7 @@ DEFAULT_PASSWORD = "Student@123"
 
 
 def get_connection(database=None):
-    cfg = {**DB_CONFIG}
+    cfg = {**DB_CONFIG, "ssl_disabled": False}
     if database:
         cfg["database"] = database
     return mysql.connector.connect(**cfg)

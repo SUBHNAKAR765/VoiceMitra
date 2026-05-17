@@ -20,6 +20,7 @@ def get_db_connection():
             "user":     parsed.username,
             "password": parsed.password,
             "database": parsed.path.lstrip("/"),
+            "ssl_disabled": False,
         }
     else:
         config = {
