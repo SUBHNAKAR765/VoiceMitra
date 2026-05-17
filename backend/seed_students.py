@@ -1,49 +1,48 @@
 """
-Run this once to create the DB, table, and insert all CGU students.
-Usage: python seed_students.py
+Run this once to create the DB table and insert all CGU students.
 
-For Railway deployment, set DATABASE_URL env var (auto-injected by Railway MySQL plugin)
-or set individual DB_HOST, DB_PORT, DB_USER, DB_PASSWORD, DB_NAME env vars.
+Usage (local):
+    python seed_students.py
+
+Usage (Railway MySQL):
+    set MYSQL_HOST=monorail.proxy.rlwy.net
+    set MYSQL_PORT=12345
+    set MYSQL_USER=root
+    set MYSQL_PASSWORD=AbCdEfGh123
+    set MYSQL_DATABASE=railway
+    python seed_students.py
 """
 import mysql.connector
-from mysql.connector import errorcode
 import bcrypt
 import csv
 import os
-from urllib.parse import urlparse
 
-database_url = os.environ.get("DATABASE_URL", "")
-if database_url:
-    _p = urlparse(database_url)
-    DB_CONFIG = {
-        "host":     _p.hostname,
-        "port":     _p.port or 3306,
-        "user":     _p.username,
-        "password": _p.password,
-    }
-    DB_NAME = _p.path.lstrip("/") or "voicemitra"
-else:
-    DB_CONFIG = {
-        "host":     os.environ.get("DB_HOST", "localhost"),
-        "port":     int(os.environ.get("DB_PORT", 3306)),
-        "user":     os.environ.get("DB_USER", "root"),
-        "password": os.environ.get("DB_PASSWORD", ""),
-    }
-    DB_NAME = os.environ.get("DB_NAME", "voicemitra")
-DATA_FILE = os.path.join(os.path.dirname(__file__), "CGUStudentsData.txt")
+# ── Connection config ─────────────────────────────────────────────────────────
+MYSQL_HOST     = os.environ.get("MYSQL_HOST",     "localhost")
+MYSQL_PORT     = int(os.environ.get("MYSQL_PORT", 3306))
+MYSQL_USER     = os.environ.get("MYSQL_USER",     "root")
+MYSQL_PASSWORD = os.environ.get("MYSQL_PASSWORD", "")
+MYSQL_DATABASE = os.environ.get("MYSQL_DATABASE", "voicemitra")
+
+IS_REMOTE = MYSQL_HOST != "localhost"
+
+DATA_FILE        = os.path.join(os.path.dirname(__file__), "CGUStudentsData.txt")
 DEFAULT_PASSWORD = "Student@123"
 
 
 def get_connection(database=None):
-    cfg = {**DB_CONFIG, "ssl_disabled": False}
+    cfg = {
+        "host":     MYSQL_HOST,
+        "port":     MYSQL_PORT,
+        "user":     MYSQL_USER,
+        "password": MYSQL_PASSWORD,
+        "connection_timeout": 30,
+    }
+    if IS_REMOTE:
+        cfg["ssl_disabled"] = False
     if database:
         cfg["database"] = database
     return mysql.connector.connect(**cfg)
-
-
-def create_database(cursor):
-    cursor.execute(f"CREATE DATABASE IF NOT EXISTS `{DB_NAME}` CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci")
-    print(f"Database `{DB_NAME}` ready.")
 
 
 def create_table(cursor):
@@ -58,12 +57,6 @@ def create_table(cursor):
             created_at  TIMESTAMP DEFAULT CURRENT_TIMESTAMP
         ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4
     """)
-    # Add username column if table already existed without it
-    try:
-        cursor.execute("ALTER TABLE students ADD COLUMN username VARCHAR(20) NOT NULL UNIQUE AFTER roll_number")
-        print("Added `username` column.")
-    except Exception:
-        pass  # column already exists
     print("Table `students` ready.")
 
 
@@ -76,8 +69,8 @@ def load_students():
     with open(DATA_FILE, encoding="utf-8") as f:
         reader = csv.DictReader(f, delimiter="\t")
         for row in reader:
-            name = row["Name"].strip()
-            roll = row["Roll Number"].strip()
+            name  = row["Name"].strip()
+            roll  = row["Roll Number"].strip()
             email = row["Email"].strip()
             if name and roll and email:
                 students.append((name, roll, email))
@@ -85,46 +78,43 @@ def load_students():
 
 
 def seed():
-    # Step 1 – create DB
-    conn = get_connection()
-    cur = conn.cursor()
-    create_database(cur)
-    conn.commit()
-    cur.close()
-    conn.close()
+    # For Railway, the database already exists — connect directly
+    if IS_REMOTE:
+        conn = get_connection(database=MYSQL_DATABASE)
+    else:
+        # Local: create DB first if needed
+        conn = get_connection()
+        cur  = conn.cursor()
+        cur.execute(f"CREATE DATABASE IF NOT EXISTS `{MYSQL_DATABASE}` CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci")
+        print(f"Database `{MYSQL_DATABASE}` ready.")
+        conn.commit()
+        cur.close()
+        conn.close()
+        conn = get_connection(database=MYSQL_DATABASE)
 
-    # Step 2 – create table & insert
-    conn = get_connection(database=DB_NAME)
     cur = conn.cursor()
     create_table(cur)
 
     students = load_students()
-    hashed = hash_password(DEFAULT_PASSWORD)
+    hashed   = hash_password(DEFAULT_PASSWORD)
 
-    inserted = 0
-    skipped = 0
+    inserted = skipped = 0
     for name, roll, email in students:
-        username = roll  # username = roll number
         try:
             cur.execute(
                 "INSERT INTO students (name, roll_number, username, email, password) VALUES (%s, %s, %s, %s, %s)",
-                (name, roll, username, email, hashed),
+                (name, roll, roll, email, hashed),
             )
             inserted += 1
         except mysql.connector.IntegrityError:
-            # Update username on existing rows that may be missing it
-            cur.execute(
-                "UPDATE students SET username=%s WHERE roll_number=%s AND (username IS NULL OR username='')",
-                (username, roll),
-            )
             skipped += 1
 
     conn.commit()
     cur.close()
     conn.close()
 
-    print(f"\nDone! {inserted} students inserted, {skipped} skipped (duplicates).")
-    print(f"Login with email ({DEFAULT_PASSWORD}) OR username/roll number ({DEFAULT_PASSWORD})")
+    print(f"\nDone! {inserted} inserted, {skipped} skipped (duplicates).")
+    print(f"Default password: {DEFAULT_PASSWORD}")
 
 
 if __name__ == "__main__":

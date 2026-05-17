@@ -13,20 +13,22 @@ class Settings(BaseSettings):
     max_history: int = 50
     ffmpeg_dir: str = ""
 
-    # Database — individual vars (local / Aiven / PlanetScale)
+    # Railway individual MySQL vars (auto-injected by Railway MySQL plugin)
+    mysql_host: str = ""
+    mysql_port: int = 3306
+    mysql_user: str = ""
+    mysql_password: str = ""
+    mysql_database: str = ""
+
+    # Fallback individual vars for local dev
     db_host: str = "localhost"
     db_user: str = "root"
     db_password: str = ""
     db_name: str = "voicemitra"
     db_port: int = 3306
 
-    # Railway injects this automatically when MySQL plugin is added
+    # Full URL fallback
     database_url: str = ""
-    mysql_url: str = ""  # Railway also injects as MYSQL_URL
-
-    @property
-    def resolved_database_url(self) -> str:
-        return self.database_url or self.mysql_url
 
     @property
     def audio_dir_abs(self) -> str:
