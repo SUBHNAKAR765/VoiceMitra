@@ -52,13 +52,17 @@ def _gtts_synthesize(text: str, filepath: str, filename: str) -> str:
 
 
 def _pyttsx3_synthesize(text: str, filepath: str, filename: str) -> str:
-    import pyttsx3
-    engine = pyttsx3.init()
-    engine.setProperty("rate", 175)
-    engine.setProperty("volume", 1.0)
-    engine.save_to_file(text, filepath)
-    engine.runAndWait()
-    return filename
+    try:
+        import pyttsx3
+        engine = pyttsx3.init()
+        engine.setProperty("rate", 175)
+        engine.setProperty("volume", 1.0)
+        engine.save_to_file(text, filepath)
+        engine.runAndWait()
+        return filename
+    except Exception:
+        # pyttsx3 requires an audio device — fallback to gTTS on servers
+        return _gtts_synthesize(text, filepath, filename)
 
 
 async def _edge_synthesize(text: str, filepath: str, filename: str) -> str:

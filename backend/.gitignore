@@ -1,0 +1,11 @@
+.env
+venv/
+.venv/
+__pycache__/
+*.pyc
+*.pyo
+audio_files/
+temp_audio.wav
+reference_voice.wav
+*.log
+.DS_Store

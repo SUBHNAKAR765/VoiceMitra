@@ -516,6 +516,69 @@ Frontend at: http://localhost:5173
 
 ---
 
+## Deploying Backend on Railway
+
+### Prerequisites
+- A [Railway](https://railway.app) account
+- Your code pushed to a GitHub repository
+
+### 1. Create a New Project on Railway
+
+1. Go to [railway.app](https://railway.app) → **New Project**
+2. Select **Deploy from GitHub repo** → connect your repository
+3. Railway will auto-detect the `railway.toml` and use `backend/Dockerfile`
+
+### 2. Add MySQL Plugin
+
+1. Inside your Railway project, click **+ New** → **Database** → **MySQL**
+2. Railway automatically injects `DATABASE_URL` into your backend service — no manual config needed
+3. Click on the MySQL service → **Connect** tab → copy the connection details
+4. Run `seed_students.py` locally pointed at the Railway MySQL to populate students:
+
+```bash
+set DATABASE_URL=mysql://user:pass@host:port/railway   # Windows
+python seed_students.py
+```
+
+### 3. Add Environment Variables
+
+In your Railway backend service → **Variables** tab, add:
+
+| Variable | Value |
+|---|---|
+| `GROQ_API_KEY` | Your Groq API key |
+| `GROQ_MODEL` | `llama-3.3-70b-versatile` |
+| `TTS_ENGINE` | `edge` |
+| `ELEVENLABS_API_KEY` | Your ElevenLabs key (if using) |
+| `ELEVENLABS_VOICE_ID` | Your ElevenLabs voice ID |
+| `WHISPER_MODEL` | `base` |
+| `AUDIO_DIR` | `audio_files` |
+| `MAX_HISTORY` | `50` |
+| `FFMPEG_DIR` | *(leave empty — ffmpeg is installed via Dockerfile)* |
+
+> `DATABASE_URL` is auto-injected by the MySQL plugin — do not set it manually.
+
+### 4. Deploy
+
+Railway auto-deploys on every push to your connected branch. Once deployed, your API will be live at:
+`https://voicemitra-backend.up.railway.app`
+
+### 5. Connect Frontend to Deployed Backend
+
+Update `frontend/vite.config.js` proxy target to your Railway URL for local dev:
+
+```js
+proxy: {
+  '/api':    { target: 'https://voicemitra-backend.up.railway.app', changeOrigin: true },
+  '/audio':  { target: 'https://voicemitra-backend.up.railway.app', changeOrigin: true },
+  '/health': { target: 'https://voicemitra-backend.up.railway.app', changeOrigin: true },
+}
+```
+
+> **Note:** Railway's free tier includes $5 credit/month. The service stays alive (no spin-down like Render's free tier).
+
+---
+
 ## Key Design Decisions
 
 **Why Groq instead of OpenAI?**

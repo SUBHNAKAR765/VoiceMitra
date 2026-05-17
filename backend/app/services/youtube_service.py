@@ -10,8 +10,6 @@ from app.config import get_settings
 logger = logging.getLogger(__name__)
 settings = get_settings()
 
-FFMPEG_DIR = settings.ffmpeg_dir or ""
-
 _model: WhisperModel = None
 
 
@@ -29,6 +27,7 @@ def validate_youtube_url(url: str) -> bool:
 
 
 def download_audio(url: str, output_dir: str) -> str:
+    ffmpeg_dir = get_settings().ffmpeg_dir or ""
     out_template = os.path.join(output_dir, "audio.%(ext)s")
     cmd = [
         "yt-dlp",
@@ -40,8 +39,8 @@ def download_audio(url: str, output_dir: str) -> str:
         "--no-warnings",
         url,
     ]
-    if FFMPEG_DIR:
-        cmd += ["--ffmpeg-location", FFMPEG_DIR]
+    if ffmpeg_dir:
+        cmd += ["--ffmpeg-location", ffmpeg_dir]
     result = subprocess.run(cmd, capture_output=True, text=True, timeout=120)
     if result.returncode != 0:
         raise RuntimeError(f"yt-dlp failed: {result.stderr.strip()}")

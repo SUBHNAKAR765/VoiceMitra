@@ -1,19 +1,35 @@
 """
 Run this once to create the DB, table, and insert all CGU students.
 Usage: python seed_students.py
+
+For Railway deployment, set DATABASE_URL env var (auto-injected by Railway MySQL plugin)
+or set individual DB_HOST, DB_PORT, DB_USER, DB_PASSWORD, DB_NAME env vars.
 """
 import mysql.connector
 from mysql.connector import errorcode
 import bcrypt
 import csv
 import os
+from urllib.parse import urlparse
 
-DB_CONFIG = {
-    "host": "localhost",
-    "user": "root",
-    "password": "0624",
-}
-DB_NAME = "voicemitra"
+database_url = os.environ.get("DATABASE_URL", "")
+if database_url:
+    _p = urlparse(database_url)
+    DB_CONFIG = {
+        "host":     _p.hostname,
+        "port":     _p.port or 3306,
+        "user":     _p.username,
+        "password": _p.password,
+    }
+    DB_NAME = _p.path.lstrip("/") or "voicemitra"
+else:
+    DB_CONFIG = {
+        "host":     os.environ.get("DB_HOST", "localhost"),
+        "port":     int(os.environ.get("DB_PORT", 3306)),
+        "user":     os.environ.get("DB_USER", "root"),
+        "password": os.environ.get("DB_PASSWORD", ""),
+    }
+    DB_NAME = os.environ.get("DB_NAME", "voicemitra")
 DATA_FILE = os.path.join(os.path.dirname(__file__), "CGUStudentsData.txt")
 DEFAULT_PASSWORD = "Student@123"
 

@@ -1,0 +1,17 @@
+.env
+.env.*
+!.env.example
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.Python
+venv/
+.venv/
+*.egg-info/
+.git/
+.gitignore
+audio_files/
+temp_audio.wav
+reference_voice.wav
+*.log

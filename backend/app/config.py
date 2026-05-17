@@ -10,13 +10,23 @@ class Settings(BaseSettings):
     audio_dir: str = "audio_files"
     elevenlabs_api_key: str = ""
     elevenlabs_voice_id: str = "EXAVITQu4vr4xnSDxMaL"
+    max_history: int = 50
+    ffmpeg_dir: str = ""
+
+    # Database — individual vars (local / Aiven / PlanetScale)
+    db_host: str = "localhost"
+    db_user: str = "root"
+    db_password: str = ""
+    db_name: str = "voicemitra"
+    db_port: int = 3306
+
+    # Railway injects this automatically when MySQL plugin is added
+    database_url: str = ""
 
     @property
     def audio_dir_abs(self) -> str:
         import os
         return os.path.abspath(self.audio_dir)
-    max_history: int = 50
-    ffmpeg_dir: str = ""
 
     class Config:
         env_file = ".env"
