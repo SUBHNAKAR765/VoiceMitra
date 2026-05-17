@@ -9,7 +9,7 @@ export default function Layout() {
   if (!user) return <Navigate to="/login" replace />
 
   return (
-    <div className="flex h-screen overflow-hidden">
+    <div className="flex h-screen overflow-hidden" style={{ height: '100dvh' }}>
       <ParticleBackground />
       <Sidebar />
       <div className="flex flex-col flex-1 overflow-hidden">

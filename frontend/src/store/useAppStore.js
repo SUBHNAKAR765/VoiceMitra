@@ -31,7 +31,7 @@ export const useAppStore = create(
       removeToast: (id) => set((s) => ({ toasts: s.toasts.filter((t) => t.id !== id) })),
 
       // Volume (persisted)
-      volume: 0.5,
+      volume: 0.3,
       setVolume: (v) => set({ volume: v }),
 
       // Language (persisted)

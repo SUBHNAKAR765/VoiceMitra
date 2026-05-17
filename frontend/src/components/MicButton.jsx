@@ -14,8 +14,8 @@ export default function MicButton({ onClick }) {
             <motion.div
               key={i}
               className="absolute rounded-full border border-red-500/40"
-              initial={{ width: 80, height: 80, opacity: 0.8 }}
-              animate={{ width: 80 + i * 40, height: 80 + i * 40, opacity: 0 }}
+              initial={{ width: 60, height: 60, opacity: 0.8 }}
+              animate={{ width: 60 + i * 30, height: 60 + i * 30, opacity: 0 }}
               transition={{ duration: 1.5, repeat: Infinity, delay: i * 0.4, ease: 'easeOut' }}
             />
           ))}
@@ -36,7 +36,7 @@ export default function MicButton({ onClick }) {
         disabled={isLoading}
         whileHover={{ scale: 1.05 }}
         whileTap={{ scale: 0.95 }}
-        className={`relative w-20 h-20 rounded-full flex items-center justify-center text-3xl font-bold z-10 transition-all duration-300 shadow-2xl
+        className={`relative w-16 h-16 md:w-20 md:h-20 rounded-full flex items-center justify-center text-3xl font-bold z-10 transition-all duration-300 shadow-2xl
           ${isRecording
             ? 'bg-gradient-to-br from-red-500 to-rose-600 shadow-red-500/40'
             : isLoading

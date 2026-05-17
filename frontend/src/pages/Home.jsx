@@ -55,7 +55,7 @@ export default function Home() {
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.2 }}
-          className="text-5xl md:text-6xl font-bold mb-4"
+          className="text-4xl md:text-6xl font-bold mb-4"
         >
           Meet{' '}
           <span className="neon-text">VoiceMitra</span>
@@ -65,7 +65,7 @@ export default function Home() {
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.3 }}
-          className="text-gray-400 text-lg md:text-xl max-w-xl mx-auto mb-8"
+          className="text-gray-400 text-base md:text-xl max-w-xl mx-auto mb-8"
         >
           Your AI-powered voice assistant. Ask about weather, news, facts, and more — just speak.
         </motion.p>

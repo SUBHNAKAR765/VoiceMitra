@@ -87,7 +87,7 @@ EDGE_VOICES = {
 async def _edge_synthesize(text: str, filepath: str, filename: str, language: str = "en") -> str:
     import edge_tts
     voice = EDGE_VOICES.get(language, EDGE_VOICES["en"])
-    communicate = edge_tts.Communicate(text, voice, rate="-5%", pitch="+0Hz", volume="+20%")
+    communicate = edge_tts.Communicate(text, voice, rate="-5%", pitch="+0Hz", volume="+0%")
     await communicate.save(filepath)
     return filename
 

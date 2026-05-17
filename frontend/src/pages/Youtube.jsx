@@ -256,7 +256,7 @@ export default function Youtube() {
             className="glass flex flex-col gap-0 overflow-hidden"
           >
             {/* Toolbar */}
-            <div className="flex flex-wrap items-center justify-between gap-3 px-5 py-4 border-b border-white/10">
+            <div className="flex flex-wrap items-center justify-between gap-2 px-5 py-4 border-b border-white/10">
               <div className="flex items-center gap-3">
                 <span className="text-sm font-medium text-white">
                   {result.segment_count} segments
@@ -267,14 +267,14 @@ export default function Youtube() {
               </div>
 
               {/* Search */}
-              <div className="relative">
+                <div className="relative w-full sm:w-auto">
                 <RiSearchLine className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-500 text-sm" />
                 <input
                   type="text"
                   value={search}
                   onChange={(e) => setSearch(e.target.value)}
                   placeholder="Search transcript..."
-                  className="bg-gray-900/60 border border-white/10 rounded-xl pl-8 pr-4 py-2 text-xs text-gray-200 placeholder-gray-600 focus:outline-none focus:border-cyan-500/50 transition-colors w-48"
+                  className="bg-gray-900/60 border border-white/10 rounded-xl pl-8 pr-4 py-2 text-xs text-gray-200 placeholder-gray-600 focus:outline-none focus:border-cyan-500/50 transition-colors w-full sm:w-48"
                 />
               </div>
 

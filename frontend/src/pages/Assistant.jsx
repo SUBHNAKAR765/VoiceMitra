@@ -147,7 +147,7 @@ export default function Assistant() {
       animate={{ opacity: 1 }}
       exit={{ opacity: 0 }}
       className="max-w-3xl mx-auto flex flex-col gap-4"
-      style={{ height: 'calc(100vh - 120px)' }}
+      style={{ height: 'calc(100dvh - 120px)' }}
     >
       {/* Chat area */}
       <div className="glass flex-1 overflow-y-auto p-4 md:p-6 min-h-0">
@@ -164,73 +164,75 @@ export default function Assistant() {
       </div>
 
       {/* Controls */}
-      <div className="glass p-4 md:p-6">
-        <div className="flex items-center justify-between gap-4">
-          <div className="flex items-center gap-3">
-            <select
-              value={language}
-              onChange={(e) => setLanguage(e.target.value)}
-              className="bg-gray-900/60 border border-white/10 rounded-xl px-3 py-2 text-sm text-gray-200 focus:outline-none focus:border-cyan-500/50 cursor-pointer"
-            >
-              <option value="en">🇬🇧 English</option>
-              <option value="hi">🇮🇳 Hindi</option>
-              <option value="gu">🇮🇳 Gujarati</option>
-              <option value="ta">🇮🇳 Tamil</option>
-              <option value="te">🇮🇳 Telugu</option>
-              <option value="bn">🇮🇳 Bengali</option>
-              <option value="es">🇪🇸 Spanish</option>
-              <option value="fr">🇫🇷 French</option>
-              <option value="de">🇩🇪 German</option>
-              <option value="ar">🇸🇦 Arabic</option>
-              <option value="zh">🇨🇳 Chinese</option>
-              <option value="ja">🇯🇵 Japanese</option>
-              <option value="ko">🇰🇷 Korean</option>
-              <option value="pt">🇧🇷 Portuguese</option>
-              <option value="ru">🇷🇺 Russian</option>
-              <option value="it">🇮🇹 Italian</option>
-            </select>
-          </div>
+      <div className="glass p-3 md:p-5">
+        {/* Row 1: Language + Clear/Download */}
+        <div className="flex items-center justify-between gap-2 mb-3">
+          <select
+            value={language}
+            onChange={(e) => setLanguage(e.target.value)}
+            className="bg-gray-900/60 border border-white/10 rounded-xl px-2 py-1.5 text-xs md:text-sm text-gray-200 focus:outline-none focus:border-cyan-500/50 cursor-pointer flex-1 max-w-[160px]"
+          >
+            <option value="en">🇬🇧 English</option>
+            <option value="hi">🇮🇳 Hindi</option>
+            <option value="gu">🇮🇳 Gujarati</option>
+            <option value="ta">🇮🇳 Tamil</option>
+            <option value="te">🇮🇳 Telugu</option>
+            <option value="bn">🇮🇳 Bengali</option>
+            <option value="es">🇪🇸 Spanish</option>
+            <option value="fr">🇫🇷 French</option>
+            <option value="de">🇩🇪 German</option>
+            <option value="ar">🇸🇦 Arabic</option>
+            <option value="zh">🇨🇳 Chinese</option>
+            <option value="ja">🇯🇵 Japanese</option>
+            <option value="ko">🇰🇷 Korean</option>
+            <option value="pt">🇧🇷 Portuguese</option>
+            <option value="ru">🇷🇺 Russian</option>
+            <option value="it">🇮🇹 Italian</option>
+          </select>
 
-          <div className="flex gap-2">
+          <div className="flex gap-1">
             <motion.button whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}
               onClick={handleClear} disabled={messages.length === 0}
-              className="btn-ghost flex items-center gap-2 text-sm disabled:opacity-30 disabled:cursor-not-allowed"
+              className="btn-ghost flex items-center gap-1 text-xs px-2 py-1.5 disabled:opacity-30 disabled:cursor-not-allowed"
             >
               <RiDeleteBin6Line />
               <span className="hidden sm:inline">Clear</span>
             </motion.button>
             <motion.button whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}
               onClick={handleDownload} disabled={messages.length === 0}
-              className="btn-ghost flex items-center gap-2 text-sm disabled:opacity-30 disabled:cursor-not-allowed"
+              className="btn-ghost flex items-center gap-1 text-xs px-2 py-1.5 disabled:opacity-30 disabled:cursor-not-allowed"
             >
               <RiDownload2Line />
               <span className="hidden sm:inline">Download</span>
             </motion.button>
           </div>
+        </div>
 
-          <div className="flex items-center gap-8">
-            <MicButton onClick={handleMicClick} />
-            <PlayPauseButton 
-              isPlaying={isPlaying} 
-              onClick={togglePlayPause} 
-              disabled={isLoading || (!audioRef.current && !lastAudioUrl)} 
+        {/* Row 2: Volume + Mic + Play */}
+        <div className="flex items-center justify-between gap-3">
+          <div className="flex items-center gap-1.5 flex-1">
+            <RiVolumeDownLine className="text-gray-400 text-sm shrink-0" />
+            <input
+              type="range" min="0" max="1" step="0.05"
+              value={volume}
+              onChange={(e) => {
+                const v = parseFloat(e.target.value)
+                setVolume(v)
+                if (audioRef.current) audioRef.current.volume = v
+              }}
+              className="w-full accent-cyan-400 cursor-pointer"
             />
+            <RiVolumeUpLine className="text-gray-400 text-sm shrink-0" />
           </div>
 
-          <div className="flex items-center gap-2 w-28">
-              <RiVolumeDownLine className="text-gray-400 text-sm shrink-0" />
-              <input
-                type="range" min="0" max="1" step="0.05"
-                value={volume}
-                onChange={(e) => {
-                  const v = parseFloat(e.target.value)
-                  setVolume(v)
-                  if (audioRef.current) audioRef.current.volume = v
-                }}
-                className="w-full accent-cyan-400 cursor-pointer"
-              />
-              <RiVolumeUpLine className="text-gray-400 text-sm shrink-0" />
-            </div>
+          <div className="flex items-center gap-4 shrink-0">
+            <MicButton onClick={handleMicClick} />
+            <PlayPauseButton
+              isPlaying={isPlaying}
+              onClick={togglePlayPause}
+              disabled={isLoading || (!audioRef.current && !lastAudioUrl)}
+            />
+          </div>
         </div>
       </div>
     </motion.div>
