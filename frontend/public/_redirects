@@ -1,0 +1,4 @@
+/api/*     https://voicemitra-production.up.railway.app/api/:splat     200
+/audio/*   https://voicemitra-production.up.railway.app/audio/:splat   200
+/health    https://voicemitra-production.up.railway.app/health          200
+/*         /index.html                                                   200
