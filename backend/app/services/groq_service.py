@@ -32,7 +32,9 @@ def ask_groq(
             messages.extend(conversation_history[-6:])
 
         if context:
-            user_content = f"Context information:\n{context}\n\nUser question: {user_query}"
+            # Strip source labels before sending to model so they never leak into the response
+            clean_context = context.replace('Web search: ', '').replace('Wikipedia: ', '')
+            user_content = f"Context information:\n{clean_context}\n\nUser question: {user_query}"
         else:
             user_content = user_query
 
@@ -54,5 +56,6 @@ def ask_groq(
 
 def _fallback(context: str, query: str) -> str:
     if context:
-        return context[:450]
+        clean = context.replace('Web search: ', '').replace('Wikipedia: ', '')
+        return clean[:450]
     return "I'm sorry, I couldn't process that request right now. Please try again."
