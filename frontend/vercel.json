@@ -1,0 +1,20 @@
+{
+  "rewrites": [
+    {
+      "source": "/api/:path*",
+      "destination": "https://voicemitra-production.up.railway.app/api/:path*"
+    },
+    {
+      "source": "/audio/:path*",
+      "destination": "https://voicemitra-production.up.railway.app/audio/:path*"
+    },
+    {
+      "source": "/health",
+      "destination": "https://voicemitra-production.up.railway.app/health"
+    },
+    {
+      "source": "/(.*)",
+      "destination": "/index.html"
+    }
+  ]
+}
