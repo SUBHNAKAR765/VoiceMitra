@@ -5,23 +5,15 @@ logger = logging.getLogger(__name__)
 
 
 def web_search(query: str) -> str:
-    """
-    Search the web using DuckDuckGo (no API key required).
-    Returns a concise natural-language answer from top results.
-    """
     try:
-        with DDGS() as ddgs:
-            results = list(ddgs.text(query, max_results=5))
-
+        results = DDGS().text(query, max_results=5)
         if not results:
             return "I searched the web but couldn't find a clear answer. Please try rephrasing your question."
 
-        # Combine top snippets into a coherent answer
         snippets = [r.get("body", "").strip() for r in results if r.get("body")]
         if not snippets:
             return "I found some results but couldn't extract useful information."
 
-        # Use the most informative snippet (longest one from top 3)
         best = max(snippets[:3], key=len)
         return _trim(best)
 
