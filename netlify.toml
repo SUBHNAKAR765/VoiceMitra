@@ -1,7 +1,30 @@
 [build]
-  base    = "frontend"
-  command = "npm install && npm run build"
-  publish = "dist"
+  base      = "frontend"
+  command   = "npm ci && npm run build"
+  publish   = "frontend/dist"
 
 [build.environment]
-  NODE_VERSION = "20"
+  NODE_VERSION = "20.11.0"
+
+[[redirects]]
+  from   = "/api/*"
+  to     = "https://voicemitra-production.up.railway.app/api/:splat"
+  status = 200
+  force  = true
+
+[[redirects]]
+  from   = "/audio/*"
+  to     = "https://voicemitra-production.up.railway.app/audio/:splat"
+  status = 200
+  force  = true
+
+[[redirects]]
+  from   = "/health"
+  to     = "https://voicemitra-production.up.railway.app/health"
+  status = 200
+  force  = true
+
+[[redirects]]
+  from   = "/*"
+  to     = "/index.html"
+  status = 200
