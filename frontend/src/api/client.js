@@ -10,7 +10,7 @@ export const sendVoiceQuery = (audioBlob) => {
   })
 }
 
-export const sendTextQuery = (text, language = 'en') => api.post('/text-query', { text, language })
+export const sendTextQuery = (text) => api.post('/text-query', { text })
 export const fetchHistory = () => api.get('/history')
 export const clearHistory = () => api.delete('/history')
 export const checkHealth = () => axios.get('/health')

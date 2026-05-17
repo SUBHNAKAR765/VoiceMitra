@@ -14,7 +14,7 @@ const uid = () => Math.random().toString(36).slice(2) + Date.now().toString(36)
 
 export default function Assistant() {
   const [searchParams, setSearchParams] = useSearchParams()
-  const { messages, addMessage, clearMessages, isRecording, isLoading, setLoading, addToast, volume, setVolume, language, setLanguage } = useAppStore()
+  const { messages, addMessage, clearMessages, isRecording, isLoading, setLoading, addToast, volume, setVolume } = useAppStore()
   const { start, stop, liveText } = useSpeech()
   const chatEndRef = useRef(null)
   const audioRef = useRef(null)
@@ -65,7 +65,7 @@ export default function Assistant() {
     addMessage({ id: uid(), role: 'user', content: text, timestamp: new Date().toISOString() })
     setLoading(true)
     try {
-      const { data } = await sendTextQuery(text, language)
+      const { data } = await sendTextQuery(text)
       addMessage({ id: uid(), role: 'assistant', content: data.response, timestamp: new Date().toISOString(), audio_url: data.audio_url })
       const audio = new Audio(data.audio_url)
       audio.volume = volume
@@ -165,31 +165,8 @@ export default function Assistant() {
 
       {/* Controls */}
       <div className="glass p-3 md:p-5">
-        {/* Row 1: Language + Clear/Download */}
-        <div className="flex items-center justify-between gap-2 mb-3">
-          <select
-            value={language}
-            onChange={(e) => setLanguage(e.target.value)}
-            className="bg-gray-900/60 border border-white/10 rounded-xl px-2 py-1.5 text-xs md:text-sm text-gray-200 focus:outline-none focus:border-cyan-500/50 cursor-pointer flex-1 max-w-[160px]"
-          >
-            <option value="en">🇬🇧 English</option>
-            <option value="hi">🇮🇳 Hindi</option>
-            <option value="gu">🇮🇳 Gujarati</option>
-            <option value="ta">🇮🇳 Tamil</option>
-            <option value="te">🇮🇳 Telugu</option>
-            <option value="bn">🇮🇳 Bengali</option>
-            <option value="es">🇪🇸 Spanish</option>
-            <option value="fr">🇫🇷 French</option>
-            <option value="de">🇩🇪 German</option>
-            <option value="ar">🇸🇦 Arabic</option>
-            <option value="zh">🇨🇳 Chinese</option>
-            <option value="ja">🇯🇵 Japanese</option>
-            <option value="ko">🇰🇷 Korean</option>
-            <option value="pt">🇧🇷 Portuguese</option>
-            <option value="ru">🇷🇺 Russian</option>
-            <option value="it">🇮🇹 Italian</option>
-          </select>
-
+        {/* Row 1: Clear/Download */}
+        <div className="flex items-center justify-end gap-2 mb-3">
           <div className="flex gap-1">
             <motion.button whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}
               onClick={handleClear} disabled={messages.length === 0}

@@ -6,9 +6,10 @@ from app.config import get_settings
 logger = logging.getLogger(__name__)
 settings = get_settings()
 
+INDIAN_FEMALE_VOICE = "en-IN-NeerjaNeural"
 
-async def synthesize_speech(text: str, language: str = "en") -> str:
-    """Generate TTS audio, return filename (not full path)."""
+
+async def synthesize_speech(text: str) -> str:
     filename = f"{uuid.uuid4().hex}.mp3"
     filepath = os.path.join(settings.audio_dir_abs, filename)
 
@@ -17,9 +18,9 @@ async def synthesize_speech(text: str, language: str = "en") -> str:
     if engine == "elevenlabs":
         return await _elevenlabs_synthesize(text, filepath, filename)
     elif engine == "edge":
-        return await _edge_synthesize(text, filepath, filename, language)
+        return await _edge_synthesize(text, filepath, filename)
     elif engine == "gtts":
-        return _gtts_synthesize(text, filepath, filename, language)
+        return _gtts_synthesize(text, filepath, filename)
     return _pyttsx3_synthesize(text, filepath, filename)
 
 
@@ -44,14 +45,14 @@ async def _elevenlabs_synthesize(text: str, filepath: str, filename: str) -> str
     return filename
 
 
-def _gtts_synthesize(text: str, filepath: str, filename: str, language: str = "en") -> str:
+def _gtts_synthesize(text: str, filepath: str, filename: str) -> str:
     from gtts import gTTS
-    tts = gTTS(text=text, lang=language, slow=False)
+    tts = gTTS(text=text, lang="en", tld="co.in", slow=False)
     tts.save(filepath)
     return filename
 
 
-def _pyttsx3_synthesize(text: str, filepath: str, filename: str, language: str = "en") -> str:
+def _pyttsx3_synthesize(text: str, filepath: str, filename: str) -> str:
     try:
         import pyttsx3
         engine = pyttsx3.init()
@@ -61,33 +62,11 @@ def _pyttsx3_synthesize(text: str, filepath: str, filename: str, language: str =
         engine.runAndWait()
         return filename
     except Exception:
-        return _gtts_synthesize(text, filepath, filename, language)
+        return _gtts_synthesize(text, filepath, filename)
 
 
-EDGE_VOICES = {
-    "en": "en-IN-NeerjaNeural",
-    "hi": "hi-IN-SwaraNeural",
-    "es": "es-ES-ElviraNeural",
-    "fr": "fr-FR-DeniseNeural",
-    "de": "de-DE-KatjaNeural",
-    "ar": "ar-SA-ZariyahNeural",
-    "zh": "zh-CN-XiaoxiaoNeural",
-    "ja": "ja-JP-NanamiNeural",
-    "ko": "ko-KR-SunHiNeural",
-    "pt": "pt-BR-FranciscaNeural",
-    "ru": "ru-RU-SvetlanaNeural",
-    "it": "it-IT-ElsaNeural",
-    "gu": "gu-IN-DhwaniNeural",
-    "ta": "ta-IN-PallaviNeural",
-    "te": "te-IN-ShrutiNeural",
-    "bn": "bn-IN-TanishaaNeural",
-}
-
-
-async def _edge_synthesize(text: str, filepath: str, filename: str, language: str = "en") -> str:
+async def _edge_synthesize(text: str, filepath: str, filename: str) -> str:
     import edge_tts
-    voice = EDGE_VOICES.get(language, EDGE_VOICES["en"])
-    communicate = edge_tts.Communicate(text, voice, rate="-5%", pitch="+0Hz", volume="+0%")
+    communicate = edge_tts.Communicate(text, INDIAN_FEMALE_VOICE, rate="-5%", pitch="+2Hz", volume="+0%")
     await communicate.save(filepath)
     return filename
-

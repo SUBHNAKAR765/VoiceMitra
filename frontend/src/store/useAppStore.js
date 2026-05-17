@@ -34,10 +34,6 @@ export const useAppStore = create(
       volume: 0.3,
       setVolume: (v) => set({ volume: v }),
 
-      // Language (persisted)
-      language: 'en',
-      setLanguage: (v) => set({ language: v }),
-
       // Settings
       settings: {
         ttsEngine: 'gtts',
@@ -51,7 +47,7 @@ export const useAppStore = create(
     {
       name: 'voicemitra-store',
       // Only persist messages, settings, and user data
-      partialize: (s) => ({ messages: s.messages, settings: s.settings, user: s.user, volume: s.volume, language: s.language }),
+      partialize: (s) => ({ messages: s.messages, settings: s.settings, user: s.user, volume: s.volume }),
     }
   )
 )
