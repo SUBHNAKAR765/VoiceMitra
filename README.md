@@ -25,10 +25,12 @@ A full-stack AI-powered voice assistant web application built for CGU students. 
 
 VoiceMitra lets a user:
 
-- **Speak into the microphone** — the browser captures speech in real time using the Web Speech API
+- **Speak into the microphone** — the browser captures speech in real time using the Web Speech API with silence detection and double-tap prevention
 - **Ask questions by text** — a text input fallback is also available
 - **Get an AI-generated spoken response** — Groq LLM (LLaMA 3.3 70B) generates a natural, conversational answer
 - **Hear the response played back** — gTTS, pyttsx3, ElevenLabs, or Edge TTS converts the answer to an MP3 and plays it in the browser
+- **20 Interactive Helper Categories** — a dedicated `/features` section allows users to trigger pre-configured query templates across 20 topics (e.g. Cooking Recipes, Travel, Music, Finance, Sports, Astronomy, Coding, and more)
+- **Timezone-Aware Real-time Tracking** — automatically passes the client browser's local timezone (e.g., `Asia/Kolkata`) and local time via request headers, allowing the assistant to always respond with the accurate real-time date and time
 - **Transcribe any YouTube video** — paste a URL and get a full timestamped transcript
 - **Log in / Register** — CGU student accounts stored in MySQL, authenticated with bcrypt-hashed passwords
 - **Search the header bar** — type a query in the top search bar to send it directly to the assistant
@@ -137,8 +139,9 @@ VoiceMitra/
 │   │   │   ├── Toast.jsx            ← notification toasts
 │   │   │   └── ParticleBackground.jsx ← canvas particle animation
 │   │   └── pages/
-│   │       ├── Home.jsx             ← landing / quick-start page
+│   │       ├── Home.jsx             ← landing / quick-start page (4 core features)
 │   │       ├── Assistant.jsx        ← main voice/text chat interface
+│   │       ├── Features.jsx         ← grid of 20 assistant helper categories
 │   │       ├── Youtube.jsx          ← YouTube transcriber
 │   │       ├── Login.jsx
 │   │       ├── Register.jsx
@@ -313,7 +316,11 @@ The core page of the app:
 
 ### `pages/Home.jsx` — Landing Page
 - Hero section with animated logo rings
-- Feature cards for Weather, News, Wikipedia, Time & Date — clicking a card navigates to `/assistant?q=<query>`
+- Core feature cards for Weather, News, Wikipedia, Time & Date — clicking a card navigates to `/assistant?q=<query>`
+
+### `pages/Features.jsx` — Feature List
+- Displays a responsive visual grid containing 20 AI helper categories (Weather, News, Wikipedia, Time & Date, Dictionary, Translator, Calculator, Jokes, Quotes, Trivia, History, Coding, Health Tips, Music Recommend, Recipes, Travel Guide, Astronomy, Finance, Sports Trivia, and Literature)
+- Clicking any card directs to `/assistant` with preset template queries to start instant responses
 
 ### `pages/Login.jsx` / `Register.jsx`
 - Login accepts username, roll number, or email
@@ -335,7 +342,7 @@ The core page of the app:
 
 ### `components/Sidebar.jsx`
 - Collapsible navigation (click logo to toggle)
-- Nav links: Home, Assistant, Settings, Profile
+- Nav links: Home, Assistant, Feature, Settings, Profile
 - Sign Out button at the bottom
 
 ### `components/Waveform.jsx`
@@ -366,11 +373,10 @@ The core page of the app:
 
 ## How a Voice Query Works (End-to-End Flow)
 
-```
-1. User clicks mic button in browser
+1. User clicks mic button in browser (microphone click lock blocks double clicks)
 2. Web Speech API starts capturing speech → live transcript shown on screen
 3. After 2 seconds of silence, recording auto-stops
-4. Frontend calls POST /api/text-query with the transcript text
+4. Frontend calls POST /api/text-query with the transcript text, automatically appending timezone headers (`X-Client-Timezone` & `X-Client-Time`)
 5. Backend: moderation check (keyword filter)
    └── if unsafe → return polite refusal
 6. Backend: intent classification (regex)
@@ -379,13 +385,13 @@ The core page of the app:
    └── weather  → DuckDuckGo search "current weather <city>"
    └── news     → DuckDuckGo search "latest news"
    └── search   → Wikipedia + DuckDuckGo top snippets
-   └── time/date → current datetime string
+   └── time/date → translates client UTC time to timezone-specific local format using ZoneInfo
 8. Backend: call Groq LLM (LLaMA 3.3 70B)
-   └── system prompt + last 6 conversation turns + context + user query
+   └── system prompt (injected with client timezone and local time) + last 6 conversation turns + context + user query
    └── returns concise spoken-style response (max 300 tokens)
 9. Backend: TTS engine converts response text → UUID.mp3 saved to audio_files/
 10. Backend: returns { transcript, response, audio_url, intent, moderated }
-11. Frontend: adds messages to chat, auto-plays the MP3
+11. Frontend: checks request sequence to prevent older async requests from playing overlapping audio, adds messages to chat, auto-plays the MP3
 12. WaveSurfer.js renders the audio waveform
 ```
 
