@@ -26,7 +26,7 @@ export default function Home() {
       exit={{ opacity: 0 }}
       className="max-w-4xl mx-auto"
     >
-      {/* Hero section stays same ... */}
+      {/* Hero section */}
       <div className="text-center py-12 md:py-20">
         <div className="relative inline-flex items-center justify-center mb-8">
           <motion.div
@@ -87,7 +87,7 @@ export default function Home() {
         variants={container}
         initial="hidden"
         animate="show"
-        className="grid grid-cols-2 md:grid-cols-4 gap-4 pb-12"
+        className="grid grid-cols-2 md:grid-cols-4 gap-4 pb-20"
       >
         {features.map(({ icon: Icon, label, desc, color, query }) => (
           <motion.div

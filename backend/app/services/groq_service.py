@@ -1,4 +1,5 @@
 import logging
+from datetime import datetime
 from groq import Groq
 from app.config import get_settings
 
@@ -26,7 +27,11 @@ def ask_groq(
     try:
         client = Groq(api_key=settings.groq_api_key)
 
-        messages = [{"role": "system", "content": SYSTEM_PROMPT}]
+        now = datetime.now()
+        date_str = now.strftime('%A, %B %d, %Y at %I:%M %p')
+        full_system_prompt = f"{SYSTEM_PROMPT}\n- Current date and time: {date_str}."
+
+        messages = [{"role": "system", "content": full_system_prompt}]
 
         if conversation_history:
             messages.extend(conversation_history[-6:])

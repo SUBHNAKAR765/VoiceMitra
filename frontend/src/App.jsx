@@ -3,6 +3,7 @@ import { AnimatePresence } from 'framer-motion'
 import Layout from './components/Layout'
 import Home from './pages/Home'
 import Assistant from './pages/Assistant'
+import Features from './pages/Features'
 import Settings from './pages/Settings'
 import Youtube from './pages/Youtube'
 import Profile from './pages/Profile'
@@ -18,8 +19,9 @@ export default function App() {
           <Route path="/login" element={<Login />} />
           <Route path="/register" element={<Register />} />
           <Route element={<Layout />}>
-            <Route path="/" element={<Home />} />
+             <Route path="/" element={<Home />} />
             <Route path="/assistant" element={<Assistant />} />
+            <Route path="/features" element={<Features />} />
             <Route path="/youtube" element={<Youtube />} />
             <Route path="/settings" element={<Settings />} />
             <Route path="/profile" element={<Profile />} />

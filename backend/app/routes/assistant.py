@@ -6,7 +6,7 @@ from collections import deque
 from datetime import datetime
 from typing import List
 
-from fastapi import APIRouter, UploadFile, File, HTTPException
+from fastapi import APIRouter, UploadFile, File, HTTPException, Request
 
 from app.config import get_settings
 from app.models.schemas import ChatMessage, VoiceQueryResponse, TextQueryRequest
@@ -27,7 +27,7 @@ logger = logging.getLogger(__name__)
 _history: deque = deque(maxlen=settings.max_history)
 
 
-async def _process_text_query(transcript: str) -> VoiceQueryResponse:
+async def _process_text_query(transcript: str, client_timezone: str = None, client_time: str = None) -> VoiceQueryResponse:
     # 2. Moderation
     moderated = not is_safe(transcript)
     if moderated:
@@ -38,7 +38,7 @@ async def _process_text_query(transcript: str) -> VoiceQueryResponse:
         intent = classify_intent(transcript)
 
         # 4. Fetch raw context data for structured intents
-        context = _fetch_context(intent, transcript)
+        context = _fetch_context(intent, transcript, client_timezone, client_time)
 
         # 5. Build conversation history for Groq (user/assistant pairs only)
         history = _build_groq_history()
@@ -48,6 +48,8 @@ async def _process_text_query(transcript: str) -> VoiceQueryResponse:
             user_query=transcript,
             context=context,
             conversation_history=history,
+            client_timezone=client_timezone,
+            client_time=client_time,
         )
 
     # 7. TTS
@@ -74,7 +76,10 @@ async def _process_text_query(transcript: str) -> VoiceQueryResponse:
 
 
 @router.post("/voice-query", response_model=VoiceQueryResponse)
-async def voice_query(audio: UploadFile = File(...)):
+async def voice_query(request: Request, audio: UploadFile = File(...)):
+    client_timezone = request.headers.get("X-Client-Timezone")
+    client_time = request.headers.get("X-Client-Time")
+
     suffix = _get_suffix(audio.filename or "audio.webm")
     with tempfile.NamedTemporaryFile(delete=False, suffix=suffix) as tmp:
         tmp.write(await audio.read())
@@ -87,14 +92,16 @@ async def voice_query(audio: UploadFile = File(...)):
         except (ValueError, RuntimeError) as e:
             raise HTTPException(status_code=422, detail=str(e))
 
-        return await _process_text_query(transcript)
+        return await _process_text_query(transcript, client_timezone, client_time)
     finally:
         os.unlink(tmp_path)
 
 
 @router.post("/text-query", response_model=VoiceQueryResponse)
-async def text_query(req: TextQueryRequest):
-    return await _process_text_query(req.text)
+async def text_query(request: Request, req: TextQueryRequest):
+    client_timezone = request.headers.get("X-Client-Timezone")
+    client_time = request.headers.get("X-Client-Time")
+    return await _process_text_query(req.text, client_timezone, client_time)
 
 
 @router.get("/history", response_model=List[ChatMessage])
@@ -108,7 +115,7 @@ async def clear_history():
     return {"message": "History cleared"}
 
 
-def _fetch_context(intent: str, query: str) -> str:
+def _fetch_context(intent: str, query: str, client_timezone: str = None, client_time: str = None) -> str:
     """
     Fetch raw factual data for structured intents.
     For general queries, search the web + Wikipedia.
@@ -123,8 +130,24 @@ def _fetch_context(intent: str, query: str) -> str:
             return result if not result.startswith("I'm having trouble") else ""
         if intent in ("time", "date", "greeting"):
             # Provide current time/date as context so Groq answers accurately
-            now = datetime.now()
-            return f"Current date and time: {now.strftime('%A, %B %d, %Y at %I:%M %p')}"
+            now_str = ""
+            if client_time:
+                try:
+                    from zoneinfo import ZoneInfo
+                    dt = datetime.fromisoformat(client_time)
+                    if client_timezone:
+                        try:
+                            tz = ZoneInfo(client_timezone)
+                            dt = dt.astimezone(tz)
+                        except Exception:
+                            pass
+                    now_str = dt.strftime('%A, %B %d, %Y at %I:%M %p')
+                except Exception:
+                    pass
+            if not now_str:
+                now = datetime.now()
+                now_str = now.strftime('%A, %B %d, %Y at %I:%M %p')
+            return f"Current date and time: {now_str}"
         if intent == "search":
             wiki = get_wiki_summary(query)
             wiki_ok = wiki and not wiki.startswith("I couldn't") and not wiki.startswith("I'm not sure")

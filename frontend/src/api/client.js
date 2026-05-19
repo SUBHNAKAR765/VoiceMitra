@@ -2,6 +2,12 @@ import axios from 'axios'
 
 const api = axios.create({ baseURL: '/api' })
 
+api.interceptors.request.use((config) => {
+  config.headers['X-Client-Timezone'] = Intl.DateTimeFormat().resolvedOptions().timeZone
+  config.headers['X-Client-Time'] = new Date().toISOString()
+  return config
+})
+
 export const sendVoiceQuery = (audioBlob) => {
   const ext = audioBlob.type.includes('mp4') ? 'mp4' : audioBlob.type.includes('ogg') ? 'ogg' : 'webm'
   const form = new FormData()

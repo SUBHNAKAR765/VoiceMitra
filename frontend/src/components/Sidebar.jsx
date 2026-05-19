@@ -1,12 +1,20 @@
 import { NavLink, useNavigate } from 'react-router-dom'
 import { motion, AnimatePresence } from 'framer-motion'
-import { RiHome4Line, RiMicLine, RiSettings4Line, RiLogoutBoxRLine, RiUserLine } from 'react-icons/ri'
+import {
+  RiHome4Line,
+  RiMicLine,
+  RiSettings4Line,
+  RiLogoutBoxRLine,
+  RiUserLine,
+  RiGridLine
+} from 'react-icons/ri'
 import { useState } from 'react'
 import { useAppStore } from '../store/useAppStore'
 
 const links = [
   { to: '/', icon: RiHome4Line, label: 'Home' },
   { to: '/assistant', icon: RiMicLine, label: 'Assistant' },
+  { to: '/features', icon: RiGridLine, label: 'Feature' },
   { to: '/settings', icon: RiSettings4Line, label: 'Settings' },
   { to: '/profile', icon: RiUserLine, label: 'Profile' },
 ]
@@ -63,7 +71,7 @@ export default function Sidebar() {
       </div>
 
       {/* Nav links */}
-      <nav className="flex md:flex-col items-center justify-around md:justify-start gap-1 p-2 md:p-3 flex-1 overflow-x-hidden">
+      <nav className="flex md:flex-col items-center justify-around md:justify-start gap-1 p-2 md:p-3 flex-1 overflow-x-hidden md:overflow-y-auto w-full">
         {links.map(({ to, icon: Icon, label }) => (
           <NavLink key={to} to={to} end={to === '/'} className="flex-1 md:flex-none w-full">
             {({ isActive }) => (

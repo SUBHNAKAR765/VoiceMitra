@@ -20,11 +20,32 @@ export default function Assistant() {
   const audioRef = useRef(null)
   const [isPlaying, setIsPlaying] = useState(false)
   const [currentAudio, setCurrentAudio] = useState(null)
+  const lastRequestIdRef = useRef(0)
+  const micLockRef = useRef(false)
 
+  // Scroll to bottom
   useEffect(() => {
     chatEndRef.current?.scrollIntoView({ behavior: 'smooth' })
   }, [messages, isLoading, liveText])
 
+  // Stop audio on unmount
+  const stopAudio = useCallback(() => {
+    if (audioRef.current) {
+      try {
+        audioRef.current.pause()
+        audioRef.current.currentTime = 0
+      } catch (e) {}
+      audioRef.current = null
+      setCurrentAudio(null)
+    }
+    setIsPlaying(false)
+  }, [])
+
+  useEffect(() => {
+    return () => {
+      stopAudio()
+    }
+  }, [stopAudio])
 
   const togglePlayPause = useCallback(() => {
     if (!audioRef.current) {
@@ -48,25 +69,20 @@ export default function Assistant() {
     } else {
       audioRef.current.play().catch(() => {})
     }
-  }, [isPlaying, messages])
-
-  const stopAudio = useCallback(() => {
-    if (audioRef.current) {
-      audioRef.current.pause()
-      audioRef.current.currentTime = 0
-      audioRef.current = null
-      setCurrentAudio(null)
-    }
-    setIsPlaying(false)
-  }, [])
+  }, [isPlaying, messages, volume])
 
   const processText = useCallback(async (text) => {
     stopAudio()
+    const requestId = ++lastRequestIdRef.current
     addMessage({ id: uid(), role: 'user', content: text, timestamp: new Date().toISOString() })
     setLoading(true)
     try {
       const { data } = await sendTextQuery(text)
+      if (requestId !== lastRequestIdRef.current) return
+
       addMessage({ id: uid(), role: 'assistant', content: data.response, timestamp: new Date().toISOString(), audio_url: data.audio_url })
+      
+      stopAudio() // double-check to avoid overlaps
       const audio = new Audio(data.audio_url)
       audio.volume = volume
       audioRef.current = audio
@@ -78,18 +94,18 @@ export default function Assistant() {
       audio.play().catch(() => {})
       if (data.moderated) addToast({ type: 'error', message: 'Query was flagged by moderation.' })
     } catch (err) {
+      if (requestId !== lastRequestIdRef.current) return
       addToast({ type: 'error', message: err.response?.data?.detail || 'Something went wrong. Is the backend running?' })
     } finally {
-      setLoading(false)
+      if (requestId === lastRequestIdRef.current) {
+        setLoading(false)
+      }
     }
-  }, [addMessage, addToast, setLoading, stopAudio])
-
-  const initialProcessed = useRef(false)
+  }, [addMessage, addToast, setLoading, stopAudio, volume])
 
   useEffect(() => {
     const query = searchParams.get('q')
-    if (query && !initialProcessed.current) {
-      initialProcessed.current = true
+    if (query) {
       processText(query)
       // Clear the query from the URL without reloading
       setSearchParams({}, { replace: true })
@@ -110,11 +126,16 @@ export default function Assistant() {
         return
       }
       stopAudio()
+      const requestId = ++lastRequestIdRef.current
       setLoading(true)
       try {
         const { data } = await sendVoiceQuery(result.value)
+        if (requestId !== lastRequestIdRef.current) return
+
         addMessage({ id: uid(), role: 'user', content: data.transcript, timestamp: new Date().toISOString() })
         addMessage({ id: uid(), role: 'assistant', content: data.response, timestamp: new Date().toISOString(), audio_url: data.audio_url })
+        
+        stopAudio() // double-check to avoid overlaps
         const audio = new Audio(data.audio_url)
         audio.volume = volume
         audioRef.current = audio
@@ -126,27 +147,46 @@ export default function Assistant() {
         audio.play().catch(() => {})
         if (data.moderated) addToast({ type: 'error', message: 'Query was flagged by moderation.' })
       } catch (err) {
+        if (requestId !== lastRequestIdRef.current) return
         addToast({ type: 'error', message: err.response?.data?.detail || 'Something went wrong.' })
       } finally {
-        setLoading(false)
+        if (requestId === lastRequestIdRef.current) {
+          setLoading(false)
+        }
       }
     }
   }, [processText, stopAudio, addMessage, addToast, setLoading, volume])
 
   const handleMicClick = useCallback(async () => {
-    if (isLoading) return
+    if (isLoading || micLockRef.current) return
     if (!isRecording) {
+      micLockRef.current = true
+      stopAudio()
       try {
         await start(async () => {
-          const result = await stop()
-          await handleResult(result)
+          if (micLockRef.current) return
+          micLockRef.current = true
+          try {
+            const result = await stop()
+            await handleResult(result)
+          } finally {
+            micLockRef.current = false
+          }
         })
-      } catch (e) {}
+      } catch (e) {
+      } finally {
+        micLockRef.current = false
+      }
     } else {
-      const result = await stop()
-      await handleResult(result)
+      micLockRef.current = true
+      try {
+        const result = await stop()
+        await handleResult(result)
+      } finally {
+        micLockRef.current = false
+      }
     }
-  }, [isRecording, isLoading, start, stop, handleResult])
+  }, [isRecording, isLoading, start, stop, handleResult, stopAudio])
 
   const handleClear = async () => {
     stopAudio()
