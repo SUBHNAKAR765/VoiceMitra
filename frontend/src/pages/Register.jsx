@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import { motion } from 'framer-motion'
 import { Link, useNavigate, Navigate } from 'react-router-dom'
-import { RiMailLine, RiLockLine, RiUserLine, RiArrowRightLine, RiHashtag } from 'react-icons/ri'
+import { RiMailLine, RiLockLine, RiUserLine, RiArrowRightLine } from 'react-icons/ri'
 import { useAppStore } from '../store/useAppStore'
 import { register } from '../api/client'
 
@@ -13,7 +13,6 @@ export default function Register() {
   const [name, setName] = useState('')
   const [email, setEmail] = useState('')
   const [username, setUsername] = useState('')
-  const [rollNumber, setRollNumber] = useState('')
   const [password, setPassword] = useState('')
   const [confirmPassword, setConfirmPassword] = useState('')
   const [loading, setLoading] = useState(false)
@@ -32,7 +31,6 @@ export default function Register() {
         name,
         email,
         username,
-        roll_number: rollNumber,
         password
       })
       setUser(data)
@@ -70,28 +68,15 @@ export default function Register() {
         <h2 className="text-xl font-semibold text-white text-center mb-6">Create Account</h2>
 
         <form onSubmit={handleRegister} className="space-y-4">
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-            <div>
-              <label className="block text-[10px] font-semibold text-gray-400 uppercase tracking-wider mb-1.5 ml-1">Full Name</label>
-              <div className="relative group">
-                <RiUserLine className="absolute left-3.5 top-1/2 -translate-y-1/2 text-gray-500 group-focus-within:text-cyan-400 transition-colors" />
-                <input
-                  type="text" required value={name} onChange={(e) => setName(e.target.value)}
-                  placeholder="John Doe"
-                  className="w-full bg-gray-900/60 border border-white/10 rounded-xl px-10 py-2.5 text-sm text-gray-200 placeholder-gray-600 focus:outline-none focus:border-cyan-500/50 transition-all"
-                />
-              </div>
-            </div>
-            <div>
-              <label className="block text-[10px] font-semibold text-gray-400 uppercase tracking-wider mb-1.5 ml-1">Roll Number</label>
-              <div className="relative group">
-                <RiHashtag className="absolute left-3.5 top-1/2 -translate-y-1/2 text-gray-500 group-focus-within:text-cyan-400 transition-colors" />
-                <input
-                  type="text" required value={rollNumber} onChange={(e) => setRollNumber(e.target.value)}
-                  placeholder="2301020..."
-                  className="w-full bg-gray-900/60 border border-white/10 rounded-xl px-10 py-2.5 text-sm text-gray-200 placeholder-gray-600 focus:outline-none focus:border-cyan-500/50 transition-all"
-                />
-              </div>
+          <div>
+            <label className="block text-[10px] font-semibold text-gray-400 uppercase tracking-wider mb-1.5 ml-1">Full Name</label>
+            <div className="relative group">
+              <RiUserLine className="absolute left-3.5 top-1/2 -translate-y-1/2 text-gray-500 group-focus-within:text-cyan-400 transition-colors" />
+              <input
+                type="text" required value={name} onChange={(e) => setName(e.target.value)}
+                placeholder="John Doe"
+                className="w-full bg-gray-900/60 border border-white/10 rounded-xl px-10 py-2.5 text-sm text-gray-200 placeholder-gray-600 focus:outline-none focus:border-cyan-500/50 transition-all"
+              />
             </div>
           </div>
 

@@ -44,13 +44,13 @@ class UserResponse(BaseModel):
     name: str
     username: str
     email: str
-    roll_number: str
+    roll_number: Optional[str] = None
 
 class RegisterRequest(BaseModel):
     name: str
     email: str
     username: str
-    roll_number: str
+    roll_number: Optional[str] = None
     password: str
 
 

@@ -51,17 +51,18 @@ async def register(request: RegisterRequest):
     try:
         cursor = conn.cursor(dictionary=True)
         # Check if user already exists
-        check_query = "SELECT * FROM students WHERE username = %s OR email = %s OR roll_number = %s"
-        cursor.execute(check_query, (request.username, request.email, request.roll_number))
+        check_query = "SELECT * FROM students WHERE username = %s OR email = %s"
+        cursor.execute(check_query, (request.username, request.email))
         if cursor.fetchone():
-            raise HTTPException(status_code=400, detail="Username, Email or Roll Number already exists")
+            raise HTTPException(status_code=400, detail="Username or Email already exists")
         
         hashed = hash_password(request.password)
+        roll = request.roll_number or ''
         insert_query = """
             INSERT INTO students (name, email, username, roll_number, password)
             VALUES (%s, %s, %s, %s, %s)
         """
-        cursor.execute(insert_query, (request.name, request.email, request.username, request.roll_number, hashed))
+        cursor.execute(insert_query, (request.name, request.email, request.username, roll, hashed))
         conn.commit()
         
         new_id = cursor.lastrowid
@@ -70,7 +71,7 @@ async def register(request: RegisterRequest):
             name=request.name,
             username=request.username,
             email=request.email,
-            roll_number=request.roll_number
+            roll_number=roll
         )
     except HTTPException as he:
         raise he
