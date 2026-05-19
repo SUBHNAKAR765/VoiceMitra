@@ -20,6 +20,8 @@ def ask_groq(
     user_query: str,
     context: str = "",
     conversation_history: list[dict] = None,
+    client_timezone: str = None,
+    client_time: str = None,
 ) -> str:
     if not settings.groq_api_key:
         return _fallback(context, user_query)
@@ -27,8 +29,18 @@ def ask_groq(
     try:
         client = Groq(api_key=settings.groq_api_key)
 
-        now = datetime.now()
-        date_str = now.strftime('%A, %B %d, %Y at %I:%M %p')
+        date_str = None
+        if client_time:
+            try:
+                from zoneinfo import ZoneInfo
+                dt = datetime.fromisoformat(client_time)
+                if client_timezone:
+                    dt = dt.astimezone(ZoneInfo(client_timezone))
+                date_str = dt.strftime('%A, %B %d, %Y at %I:%M %p')
+            except Exception:
+                pass
+        if not date_str:
+            date_str = datetime.now().strftime('%A, %B %d, %Y at %I:%M %p')
         full_system_prompt = f"{SYSTEM_PROMPT}\n- Current date and time: {date_str}."
 
         messages = [{"role": "system", "content": full_system_prompt}]
