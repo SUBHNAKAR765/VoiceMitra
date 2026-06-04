@@ -2,6 +2,8 @@ import { motion } from 'framer-motion'
 import { useAppStore } from '../store/useAppStore'
 import { RiSaveLine, RiVolumeUpLine } from 'react-icons/ri'
 
+
+
 function Section({ icon: Icon, title, children }) {
   return (
     <div className="glass p-6">
@@ -24,10 +26,11 @@ function Field({ label, hint, children }) {
   )
 }
 
-const inputCls = "w-full bg-gray-900/60 border border-white/10 rounded-xl px-4 py-2.5 text-sm text-gray-200 placeholder-gray-600 focus:outline-none focus:border-cyan-500/50 transition-colors"
-
 export default function Settings() {
-  const { settings, updateSettings, addToast } = useAppStore()
+  const { 
+    settings, updateSettings, addToast,
+    isDark
+  } = useAppStore()
 
   const save = () => addToast({ type: 'success', message: 'Settings saved locally!' })
 
@@ -38,8 +41,6 @@ export default function Settings() {
       exit={{ opacity: 0 }}
       className="max-w-2xl mx-auto flex flex-col gap-6 pb-8"
     >
-
-
 
       {/* TTS Engine */}
       <Section icon={RiVolumeUpLine} title="Voice Engine">
@@ -61,6 +62,7 @@ export default function Settings() {
           </div>
         </Field>
       </Section>
+
 
       <motion.button
         whileHover={{ scale: 1.02 }}

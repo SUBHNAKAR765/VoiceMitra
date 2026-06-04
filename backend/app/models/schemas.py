@@ -9,12 +9,14 @@ class ChatMessage(BaseModel):
     content: str
     timestamp: datetime
     audio_url: Optional[str] = None
+    video_url: Optional[str] = None
 
 
 class VoiceQueryResponse(BaseModel):
     transcript: str
     response: str
     audio_url: str
+    video_url: Optional[str] = None
     intent: str
     moderated: bool = False
 

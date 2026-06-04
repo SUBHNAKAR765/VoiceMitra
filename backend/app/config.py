@@ -12,8 +12,7 @@ class Settings(BaseSettings):
     elevenlabs_voice_id: str = "EXAVITQu4vr4xnSDxMaL"
     max_history: int = 50
     ffmpeg_dir: str = ""
-
-
+    did_api_key: str = ""
 
     @property
     def audio_dir_abs(self) -> str:

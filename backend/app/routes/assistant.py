@@ -56,6 +56,24 @@ async def _process_text_query(transcript: str, client_timezone: str = None, clie
     audio_filename = await synthesize_speech(response_text)
     audio_url = f"/audio/{audio_filename}"
 
+    # 7.5. SadTalker Avatar Video
+    video_url = None
+    try:
+        from app.services.sadtalker_service import generate_sadtalker_video
+        import shutil
+        import os
+        
+        audio_abs_path = os.path.join(settings.audio_dir_abs, audio_filename)
+        sadtalker_video_path = await generate_sadtalker_video(audio_abs_path)
+        
+        if sadtalker_video_path and os.path.exists(sadtalker_video_path):
+            video_filename = f"avatar_{uuid.uuid4().hex}.mp4"
+            dest_video_path = os.path.join(settings.audio_dir_abs, video_filename)
+            shutil.copy2(sadtalker_video_path, dest_video_path)
+            video_url = f"/audio/{video_filename}"
+    except Exception as e:
+        logger.error(f"Failed to generate avatar video: {e}")
+
     # 8. Save to history
     now = datetime.utcnow()
     _history.append(ChatMessage(
@@ -63,13 +81,14 @@ async def _process_text_query(transcript: str, client_timezone: str = None, clie
     ))
     _history.append(ChatMessage(
         id=uuid.uuid4().hex, role="assistant", content=response_text,
-        timestamp=now, audio_url=audio_url
+        timestamp=now, audio_url=audio_url, video_url=video_url
     ))
 
     return VoiceQueryResponse(
         transcript=transcript,
         response=response_text,
         audio_url=audio_url,
+        video_url=video_url,
         intent=intent,
         moderated=moderated,
     )
