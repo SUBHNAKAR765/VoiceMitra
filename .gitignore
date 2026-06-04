@@ -16,6 +16,14 @@ backend/app/models/__pycache__/
 # Generated audio files
 backend/audio_files/*.mp3
 backend/audio_files/*.wav
+backend/temp_audio.wav
+backend/temp_*.wav
+backend/temp_*.mp3
+
+# Large ML model files / venv
+backend/venv/
+*.dll
+*.so
 
 # Node
 frontend/node_modules/
